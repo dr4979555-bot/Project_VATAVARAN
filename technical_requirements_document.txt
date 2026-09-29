@@ -1,0 +1,306 @@
+================================================================================
+PROJECT VATAWARAN: TECHNICAL REQUIREMENTS DOCUMENT (TRD)
+AI-Driven Spatio-Temporal Extreme Weather Tracking & Downscaling Engine
+Smart India Hackathon 2026 | Problem Statement ID: 26078
+Document Version: 1.0.0
+Status: ENGINEERING READY
+================================================================================
+
+1. SYSTEM ARCHITECTURE & DATA FLOW
+--------------------------------------------------------------------------------
+The VATAWARAN platform is structured into five distinct operational stages:
+
+[NEPS-G / NCUM 12 km Ingest]      [ERA5 / IMDAA 30-Year Climatology]
+            │                                     │
+            └─────────────────┬───────────────────┘
+                              ▼
+  +───────────────────────────────────────────────────────────+
+  | 1. DATA INGESTION & NORMALIZATION PIPELINE                |
+  |    - Parallel chunked loading (xarray + Dask)             |
+  |    - Standard anomaly scoring against baseline            |
+  |    - Metric conversion and vertical level extraction      |
+  +───────────────────────────────────────────────────────────+
+                              │
+                              ▼
+  +───────────────────────────────────────────────────────────+
+  | 2. STAGE 1: SPHERICAL GNN ANOMALY TRACKER                 |
+  |    - Icosahedral geodesic mesh mapping (Level 6)          |
+  |    - Spatio-temporal message passing (DGL / PyTorch)      |
+  |    - Extreme Forecast Index (EFI) calculation             |
+  |    - Kalman filter trajectory & dynamic 4D bounding box   |
+  +───────────────────────────────────────────────────────────+
+                              │
+                              ▼
+  +───────────────────────────────────────────────────────────+
+  | 3. DYNAMIC SPATIAL CROPPING ENGINE                        |
+  |    - Extracts 4D bounding box [B, C, T, Lat, Lon]         |
+  |    - 20% spatial buffer added around anomaly cone         |
+  +───────────────────────────────────────────────────────────+
+                              │
+                              ▼
+  +───────────────────────────────────────────────────────────+
+  | 4. STAGE 2: PHYSICS-GUIDED CONDITIONAL DIFFUSION MODEL    |
+  |    - Conditioning: 12 km coarse grid + SRTM DEM + LSM     |
+  |    - Denoising U-Net with cross-attention (Diffusers)     |
+  |    - Physics constraints (mass conservation, moisture)    |
+  |    - DDIM accelerated sampling (50 steps) -> 5 km grid    |
+  +───────────────────────────────────────────────────────────+
+                              │
+                              ▼
+  +───────────────────────────────────────────────────────────+
+  | 5. VALIDATION, ALERTING & DELIVERY LAYER                  |
+  |    - Physics consistency scoring & QA gate                |
+  |    - Max amplitude centroid extraction (5 km radius)      |
+  |    - FastAPI GeoJSON endpoint & COG raster generation     |
+  |    - High-performance GIS frontend (Mapbox / Deck.gl)     |
+  +───────────────────────────────────────────────────────────+
+
+
+2. DATA PIPELINE & PREPROCESSING SPECIFICATIONS
+--------------------------------------------------------------------------------
+2.1 Ingestion Sources
+  - NCMRWF Global Ensemble (NEPS-G): 12 km grid spacing, 6-hour temporal 
+    resolution, 3 to 10 day lead-time projections.
+  - NCMRWF Unified Model (NCUM): 12 km deterministic run.
+  - Baseline Climatology: ERA5 reanalysis (1991–2020) and IMDAA 12 km reanalysis.
+  - Static Geospatial Fields: SRTM 30 m Digital Elevation Model downsampled to 
+    5 km; ESA WorldCover land-use land-cover fractions at 5 km.
+
+2.2 Atmospheric State Vector ($X_t$)
+At every forecast time step $t$, the atmospheric vector $X_t$ is constructed as:
+  $$X_t = \left[ U_{850}, V_{850}, U_{200}, V_{200}, Z_{500}, T_{850}, T_{2m}, Q_{700}, TP \right]$$
+Where:
+  - $U_p, V_p$: Zonal and meridional wind components at level $p\text{ hPa}$ ($\text{m}\cdot\text{s}^{-1}$)
+  - $Z_{500}$: Geopotential height at $500\text{ hPa}$ ($\text{m}^2\cdot\text{s}^{-2}$)
+  - $T_{850}, T_{2m}$: Temperature at $850\text{ hPa}$ and $2\text{ m}$ surface ($\text{K}$)
+  - $Q_{700}$: Specific humidity at $700\text{ hPa}$ ($\text{kg}\cdot\text{kg}^{-1}$)
+  - $TP$: Total accumulated precipitation ($\text{kg}\cdot\text{m}^{-2}$)
+
+2.3 Anomaly Standardization
+Anomalies are normalized against the 30-year climatological mean ($\mu_c$) and 
+standard deviation ($\sigma_c$) for day-of-year $d$:
+  $$\hat{X}_t = \frac{X_t - \mu_c(d)}{\sigma_c(d) + \epsilon}$$
+where $\epsilon = 10^{-6}$ prevents division by zero.
+
+
+3. STAGE 1: SPHERICAL GRAPH NEURAL NETWORK (GNN) SPECIFICATIONS
+--------------------------------------------------------------------------------
+3.1 Mesh Representation
+To prevent polar coordinate distortion and non-uniform pixel areas inherent in 
+equirectangular projections, the Earth's surface is discretized using an 
+icosahedral geodesic mesh recursively subdivided to Level 6 ($L_6$):
+  - Total Vertices ($\mathcal{V}$): 40,962 nodes.
+  - Total Triangular Faces: 81,920 faces.
+  - Mean Node-to-Node Spacing: ~105 km (optimal for macro synoptic tracking).
+  - Graph Topology: Represented as $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, 
+    where each node $v_i \in \mathcal{V}$ maintains node features $h_i^{(t)} \in \mathbb{R}^{d_{in}}$, 
+    and edges $e_{ij} \in \mathcal{E}$ represent 3D Cartesian Euclidean displacement 
+    vectors and geodesic distances on the sphere.
+
+3.2 Spatio-Temporal Message Passing Architecture
+Message passing across spherical nodes is governed by:
+  $$m_{ij}^{(t)} = \phi_e \left( h_i^{(t)}, h_j^{(t)}, e_{ij} \right)$$
+  $$h_i^{(t+1)} = \text{GRU} \left( \sum_{j \in \mathcal{N}(i)} \alpha_{ij} m_{ij}^{(t)}, \, h_i^{(t)} \right)$$
+Where:
+  - $\phi_e$ is an Edge MLP with LayerNorm and GELU activations.
+  - $\alpha_{ij}$ represents multi-head spatial self-attention weights.
+  - $\text{GRU}$ is a Gated Recurrent Unit tracking temporal feature transitions.
+
+3.3 Extreme Forecast Index (EFI) Formulation
+The EFI quantifies the divergence between the $M$-member forecast cumulative 
+distribution function $F_f(x)$ and the climatological baseline CDF $F_c(x)$:
+  $$\text{EFI} = \frac{2}{\pi} \int_0^1 \frac{p - F_f(F_c^{-1}(p))}{\sqrt{p(1-p)}} \, dp$$
+The model isolates active anomaly clusters where $\text{EFI} \ge 0.80$ using 
+spherical DBSCAN. Trajectory paths are smoothed with a Kalman filter to output 
+a dynamic bounding box tensor:
+  $$\mathcal{B}_{\text{anom}} = [Lat_{\min}, Lat_{\max}, Lon_{\min}, Lon_{\max}, T_{start}, T_{end}]$$
+
+
+4. STAGE 2: AMPLITUDE-PRESERVING DIFFUSION DOWNSCALING SPECIFICATIONS
+--------------------------------------------------------------------------------
+4.1 Formulation & Objective
+Standard $L_2$ regression models predict the conditional expectation $\mathbb{E}[y|x]$, 
+which mathematically flattens localized high-intensity extremes. VATAWARAN 
+formulates downscaling as conditional generative modeling via a Denoising 
+Diffusion Probabilistic Model (DDPM).
+
+Target Output: High-resolution 5 km tensor $y_0 = [TP_{5km}, U_{10m}, V_{10m}, T_{2m}]$.
+Conditioning Vector: $c = [\hat{X}_{\text{coarse}}, \text{DEM}_{5km}, \text{LSM}_{5km}]$.
+
+Forward Diffusion Process:
+  $$q(y_t \mid y_0) = \mathcal{N}\left( y_t; \, \sqrt{\bar{\alpha}_t} y_0, \, (1 - \bar{\alpha}_t) \mathbf{I} \right)$$
+
+Reverse Denoising Step:
+  $$p_\theta(y_{t-1} \mid y_t, c) = \mathcal{N}\left( y_{t-1}; \, \mu_\theta(y_t, t, c), \, \Sigma_\theta(y_t, t, c) \right)$$
+
+4.2 Physics-Informed Multi-Objective Loss Function
+The model parameter weights $\theta$ are trained using a combined objective:
+  $$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{diff}} + \lambda_1 \mathcal{L}_{\text{mass}} + \lambda_2 \mathcal{L}_{\text{moist}} + \lambda_3 \mathcal{L}_{\text{grad}}$$
+
+Where:
+  1. Score-Matching Denoising Loss:
+     $$\mathcal{L}_{\text{diff}} = \mathbb{E}_{t, y_0, \epsilon} \left[ \left\| \epsilon - \epsilon_\theta(y_t, t, c) \right\|^2 \right]$$
+
+  2. Mass Conservation (Kinematic Incompressibility Kernel):
+     Enforces horizontal divergence constraints on surface wind fields:
+     $$\mathcal{L}_{\text{mass}} = \left\| \nabla_H \cdot \vec{V}_{10m} \right\|^2 = \left\| \frac{\partial U_{10m}}{\partial x} + \frac{\partial V_{10m}}{\partial y} \right\|^2$$
+     Computed via 2D finite-difference Sobel convolution operators.
+
+  3. Moisture Flux Convergence Constraint:
+     Prevents the hallucination of extreme precipitation ($TP$) without 
+     corresponding low-level moisture convergence:
+     $$\mathcal{L}_{\text{moist}} = \left\| \operatorname{ReLU}\left( TP_{5km} - \left[ -\nabla \cdot (Q_{700} \vec{V}_{850}) + \Delta Q \right] \right) \right\|^2$$
+
+  4. Gradient Amplitude Preservation:
+     Forces retention of high-frequency spatial variation and steep peak values:
+     $$\mathcal{L}_{\text{grad}} = \left\| |\nabla y_{\text{pred}}| - |\nabla y_{\text{true}}| \right\|_1$$
+
+Hyperparameter Weights: $\lambda_1 = 0.05$, $\lambda_2 = 0.10$, $\lambda_3 = 0.02$.
+
+4.3 Accelerated Inference Sampling
+Sampling is executed via the Denoising Diffusion Implicit Models (DDIM) 
+scheduler over $N = 50$ steps (reduced from 1000 steps), yielding a 20x 
+inference speedup with negligible metric degradation.
+
+
+5. API SPECIFICATIONS & INTEGRATION CONTRACTS
+--------------------------------------------------------------------------------
+Framework: FastAPI / ASGI Server (Uvicorn workers)
+Base URL: `/api/v1`
+
+5.1 GET `/forecast/track`
+Retrieves spatio-temporal trajectories of detected extreme anomalies.
+
+Query Parameters:
+  - `lead_time_min` (integer, default: 72)
+  - `lead_time_max` (integer, default: 240)
+  - `min_efi` (float, default: 0.80)
+
+Response Payload (application/json):
+{
+  "status": "success",
+  "forecast_cycle": "2026-09-30T00:00:00Z",
+  "anomalies_detected": 1,
+  "data": [
+    {
+      "anomaly_id": "BOB-CYCLONE-2026-01",
+      "hazard_type": "TROPICAL_CYCLONE",
+      "confidence_score": 0.94,
+      "trajectories": [
+        {
+          "lead_time_hours": 72,
+          "valid_utc": "2026-10-03T00:00:00Z",
+          "centroid": [88.25, 17.50],
+          "bounding_box": [15.0, 85.5, 20.0, 91.0]
+        },
+        {
+          "lead_time_hours": 96,
+          "valid_utc": "2026-10-04T00:00:00Z",
+          "centroid": [87.80, 19.80],
+          "bounding_box": [17.5, 85.0, 22.0, 90.5]
+        }
+      ]
+    }
+  ]
+}
+
+5.2 POST `/downscale/generate`
+Executes Stage 2 physics-constrained diffusion downscaling for an anomaly crop.
+
+Request Payload (application/json):
+{
+  "anomaly_id": "BOB-CYCLONE-2026-01",
+  "lead_time_hours": 96,
+  "target_variables": ["TP", "U10M", "V10M"],
+  "num_ensemble_samples": 10
+}
+
+Response Payload (application/geo+json):
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "anomaly_id": "BOB-CYCLONE-2026-01",
+    "lead_time_hours": 96,
+    "valid_utc": "2026-10-04T00:00:00Z",
+    "resolution_km": 5.0,
+    "physics_qa_passed": true,
+    "physics_residual": 0.014
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [87.82, 19.84]
+      },
+      "properties": {
+        "alert_type": "SEVERE_WEATHER_IMPACT",
+        "impact_radius_km": 5.0,
+        "severity_level": "SEVERE",
+        "metrics": {
+          "peak_precipitation_p50_mm": 182.4,
+          "peak_precipitation_p90_mm": 264.1,
+          "peak_precipitation_p99_mm": 312.8,
+          "peak_wind_gust_kmh": 146.5
+        },
+        "advisory": "High likelihood of extreme localized inundation and structural wind shear."
+      }
+    }
+  ]
+}
+
+
+6. INFRASTRUCTURE & HARDWARE DEPLOYMENT SPECIFICATIONS
+--------------------------------------------------------------------------------
+6.1 Hardware Topology
+  - Processing Tier 1 (Data Ingestion & Slicing):
+    * CPU: 1x AMD EPYC 7763 (64 cores, 128 threads)
+    * RAM: 256 GB DDR4
+    * Storage: 2 TB NVMe local cache for high-throughput GRIB2 slicing
+  - Processing Tier 2 (ML Inference Cluster):
+    * GPU: 1x NVIDIA A10G (24 GB VRAM) or 1x NVIDIA L40S (48 GB VRAM)
+    * CUDA Version: 12.4
+    * Host RAM: 64 GB
+  - Serving Tier (API & Raster Cache):
+    * 4x vCPU, 16 GB RAM Kubernetes Pods running FastAPI + Redis 7 Cache
+    * Object Storage: AWS S3 or MinIO bucket storing Cloud Optimized GeoTIFFs
+
+6.2 Technology Stack
+  +--------------------+------------------------------+------------------------+
+  | Subsystem          | Framework / Library          | Version Target         |
+  +--------------------+------------------------------+------------------------+
+  | Array Computing    | xarray, dask, zarr           | >= 2024.03.0           |
+  | Dynamic Modeling   | MetPy, Cartopy               | >= 1.6.0               |
+  | Spherical Graph ML | PyTorch, Deep Graph Lib (DGL)| >= 2.2.0, DGL >= 2.0.0 |
+  | Generative Models  | Hugging Face Diffusers       | >= 0.27.0              |
+  | API Web Service    | FastAPI, Pydantic v2, Uvicorn| >= 0.110.0             |
+  | Map Visualization  | Deck.gl, Mapbox GL JS        | Deck.gl v8.9+          |
+  +--------------------+------------------------------+------------------------+
+
+
+7. VERIFICATION, QA TESTING & OPERATIONAL RUNBOOKS
+--------------------------------------------------------------------------------
+7.1 Benchmark Test Cases (Historical Retrospectives)
+  - Case 1: Super Cyclone Amphan (May 2020)
+    * Pass Criteria: Stage 1 tracks Bay of Bengal landfall trajectory with 
+      <= 30 km centroid displacement at 72 hours. Stage 2 retains wind speed 
+      extrema >= 150 km/h in coastal Sunderbans.
+  - Case 2: 2022 North India Extreme Heatwave
+    * Pass Criteria: Accurately identifies 850 hPa geopotential ridge. 5 km 
+      downscaled surface temperatures retain the 99th percentile maximums 
+      within 1.2 deg C of ground-based Automated Weather Station (AWS) records.
+  - Case 3: 2023 Western Himalayan Torrential Rain / Flash Floods
+    * Pass Criteria: Topographically conditioned diffusion prevents spatial 
+      leakage of high-intensity rain bands over leeward rain-shadow zones.
+
+7.2 Quality Assurance Gating Thresholds
+  - Physical Conservation Audit: If $\mathcal{L}_{\text{mass}} > 0.05$ or 
+    $\mathcal{L}_{\text{moist}} > 0.15$ on output tensors, the generation is 
+    flagged as invalid.
+  - Fail-Safe Fallback Procedure:
+    1. Worker detects physics validation failure or GPU timeout (> 60 s).
+    2. System triggers bicubic spline downscaling augmented with elevation 
+       lapse-rate adjustments ($-6.5\text{ K}/\text{km}$).
+    3. Output JSON flags `"degraded_mode": true` and issues broad-brush 
+       meteorological warnings with explicit uncertainty caveats.
+================================================================================

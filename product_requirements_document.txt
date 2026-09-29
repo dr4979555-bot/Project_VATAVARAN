@@ -1,0 +1,215 @@
+================================================================================
+PROJECT VATAWARAN: PRODUCT REQUIREMENTS DOCUMENT (PRD)
+AI-Driven Spatio-Temporal Extreme Weather Tracking & Downscaling Engine
+Smart India Hackathon 2026 | Problem Statement ID: 26078
+Document Version: 1.0.0
+Status: APPROVED / PRODUCTION CANDIDATE
+================================================================================
+
+1. EXECUTIVE SUMMARY & PROBLEM STATEMENT
+--------------------------------------------------------------------------------
+1.1 Background & Context
+Modern operational weather forecasting relies on massive Numerical Weather 
+Prediction (NWP) systems, such as the 12 km NCMRWF Global Ensemble Prediction 
+System (NEPS-G) and the deterministic NCUM model. In medium-range forecasting 
+(3 to 10 days), non-linear atmospheric chaos produces wide ensemble spread, 
+rendering single deterministic forecasts unreliable. Meteorologists must 
+manually scan multi-terabyte, multivariable 4D datasets to identify evolving 
+catastrophic weather anomalies (e.g., tropical cyclones, localized cloudbursts, 
+severe heat domes, and cold waves).
+
+1.2 The Core Problem: Spectral Smoothing
+Existing deep learning approaches (such as conventional Convolutional Neural 
+Networks and U-Nets) fail when applied directly to extreme weather downscaling. 
+Because they optimize standard mean-error loss functions (Mean Squared Error or 
+Mean Absolute Error), they suffer from severe "spectral smoothing." In effect, 
+they average out spatial extremes, flattening peak wind gusts, torrential 
+precipitation rates, and localized thermal anomalies. There remains a critical 
+operational gap between coarse 12 km global ensemble grids and localized, 
+high-fidelity threat tracking.
+
+1.3 Proposed Solution Overview (Project VATAWARAN)
+Project VATAWARAN provides an end-to-end automated climate intelligence engine 
+utilizing a two-stage hybrid AI architecture:
+  - Stage 1 (Spherical GNN Tracking): Ingests global ensemble fields directly 
+    onto an icosahedral spherical mesh, calculating Extreme Forecast Index (EFI) 
+    anomalies against a 30-year climatological baseline to isolate and track 
+    moving 4D bounding boxes over a 3- to 10-day window.
+  - Stage 2 (Amplitude-Preserving Diffusion Downscaling): Crops the isolated 
+    anomaly zone and executes a physics-constrained conditional diffusion 
+    model. This generates a hyper-local 5 km subgrid impact zone that preserves 
+    true extreme amplitudes without regression blurring.
+  - Delivery Layer: Translates 5 km centroid arrays into automated GIS layers 
+    and machine-readable GeoJSON alerts for emergency services and agriculture.
+
+
+2. TARGET AUDIENCE, USER PERSONAS & OPERATIONAL PAIN POINTS
+--------------------------------------------------------------------------------
+2.1 Persona 1: Incident Commander / First Responder
+    - Target Entity: National Disaster Response Force (NDRF), State Disaster 
+      Management Authorities (SDMA).
+    - Responsibilities: Pre-positioning rescue personnel, evacuating vulnerable 
+      populations, dispatching heavy flood mitigation machinery.
+    - Current Pain Point: "Alert Fatigue." Existing alerts are issued across 
+      entire districts or states. Broad, non-specific warnings cause public 
+      complacency and misallocation of emergency assets.
+    - VATAWARAN Solution: Pinpoints a maximum-severity coordinate with a 5 km 
+      high-risk radius, giving 24 to 72 hours of targeted tactical lead time.
+
+2.2 Persona 2: District Agricultural Officer & Farming Cooperatives
+    - Target Entity: Ministry of Agriculture & Farmers Welfare, Krishi Vigyan 
+      Kendras (KVKs), Farmer Producer Organizations (FPOs).
+    - Responsibilities: Issuing agro-meteorological advisories, managing 
+      irrigation gates, organizing protective crop harvesting.
+    - Current Pain Point: Sudden microclimate anomalies (frost, localized hail, 
+      unseasonal downpours, flash heatwaves) destroy standing crops because 
+      district-level forecasts fail to capture local geographic exposure.
+    - VATAWARAN Solution: 3- to 10-day structural foresight at 5 km resolution, 
+      enabling pre-harvest adjustments and crop protective coverings.
+
+2.3 Persona 3: Operational Duty Forecaster
+    - Target Entity: National Weather Prediction Centers (NCMRWF, IMD).
+    - Responsibilities: Monitoring 50+ ensemble members across multiple runs 
+      daily, issuing severe weather bulletins.
+    - Current Pain Point: Manual slice-and-dice data triage across gigabytes of 
+      GRIB2 files creates cognitive overload and delays warning dissemination.
+    - VATAWARAN Solution: Automated anomaly trajectory extraction with 
+      pre-computed dynamic bounding boxes and physical consistency metrics.
+
+
+3. PRODUCT GOALS & QUANTIFIABLE SUCCESS METRICS (KPIS)
+--------------------------------------------------------------------------------
+3.1 Strategic Goals
+  G-1: Replace manual NWP data triage with automated spherical anomaly tracking.
+  G-2: Eliminate spectral smoothing in extreme downscaling through generative 
+       diffusion while enforcing thermodynamic and hydrodynamic laws.
+  G-3: Reduce warning latency from hours to under 60 seconds on standard GPU 
+       nodes, democratizing supercomputing-grade meteorological alerts.
+
+3.2 Success Metrics & Key Performance Indicators
+
+  +-----------------------+-----------------------------+----------------------+
+  | Metric Name           | Industry / Baseline Metric  | VATAWARAN Target     |
+  +-----------------------+-----------------------------+----------------------+
+  | Track Centroid Error  | ~80 km (synoptic manual)    | <= 35 km at T+72h    |
+  | (3- to 5-day horizon) |                             |                      |
+  +-----------------------+-----------------------------+----------------------+
+  | Anomaly Precision /   | 0.68 / 0.62                 | >= 0.88 / >= 0.85    |
+  | Recall (EFI score)    |                             |                      |
+  +-----------------------+-----------------------------+----------------------+
+  | 99th Percentile Peak  | 61% (Standard CNN / U-Net   | >= 94% retention of  |
+  | Amplitude Retention   | MSE regression smoothing)   | ground-truth peak    |
+  +-----------------------+-----------------------------+----------------------+
+  | Target Resolution     | 12 km (coarse NWP ensemble) | 5 km downscaled grid |
+  +-----------------------+-----------------------------+----------------------+
+  | Physical Conservation | > 22% violation rate in     | <= 2.5% violation    |
+  | Violation Rate        | unconstrained deep learning | rate across runs     |
+  +-----------------------+-----------------------------+----------------------+
+  | End-to-End Pipeline   | 45 to 90 minutes (local     | <= 60 seconds on     |
+  | Inference Latency     | WRF numerical nested runs)  | 1x NVIDIA A10G GPU   |
+  +-----------------------+-----------------------------+----------------------+
+
+
+4. USER JOURNEYS & SCENARIOS
+--------------------------------------------------------------------------------
+4.1 Scenario A: Tropical Cyclone Landfall Prediction
+  - Step 1: Upstream NEPS-G 00Z run arrives via automated pipeline.
+  - Step 2: VATAWARAN's Stage 1 GNN scans the Bay of Bengal and flags an anomaly 
+    with an EFI score of 0.94 at lead time T+96h.
+  - Step 3: A dynamic 4D bounding box is computed, defining the cyclone center 
+    and estimated track cone over the next 4 days.
+  - Step 4: The forecaster reviews the track and initiates Stage 2 diffusion.
+  - Step 5: The engine produces a 5 km localized wind-field and rain footprint 
+    revealing a peak precipitation cell exceeding 280 mm/24h.
+  - Step 6: Automated GeoJSON alert dispatched to state disaster headquarters.
+
+4.2 Scenario B: Agricultural Flash Heatwave Alert
+  - Step 1: Stage 1 GNN identifies a persistent 850 hPa geopotential ridge 
+    over Northwest India at lead time T+120h.
+  - Step 2: The system tracks the centroid of the thermal anomaly and crops a 
+    500 km x 500 km subgrid over an agrarian belt.
+  - Step 3: Stage 2 diffusion downscales the 2-meter temperature ($T_{2m}$), 
+    incorporating local elevation profiles.
+  - Step 4: Agricultural dashboards receive localized risk indices indicating 
+    temperatures exceeding 44 deg C for 72 consecutive hours.
+  - Step 5: FPO managers trigger automated SMS advisories recommending 
+    emergency night-time irrigation to prevent crop desiccation.
+
+
+5. FUNCTIONAL REQUIREMENTS (FR)
+--------------------------------------------------------------------------------
+5.1 Module 1: Ingestion & Trajectory Tracking (Stage 1)
+  - FR-1.1: The system shall ingest GRIB2 and NetCDF4 datasets containing 12 km 
+    NEPS-G ensemble outputs across multi-pressure levels (1000 to 200 hPa).
+  - FR-1.2: The system shall calculate the Extreme Forecast Index (EFI) by 
+    referencing a pre-computed 30-year climatological baseline (ERA5 / IMDAA).
+  - FR-1.3: The system shall project global lat-long grids onto a distortion-free 
+    icosahedral spherical mesh representation.
+  - FR-1.4: The system shall identify spatial clusters with EFI >= 0.80 and 
+    generate a 4D spatio-temporal bounding box covering a 3- to 10-day window.
+
+5.2 Module 2: Physics-Guided Downscaling (Stage 2)
+  - FR-2.1: The system shall dynamically extract the multivariable atmospheric 
+    tensor within the bounding box computed by Stage 1.
+  - FR-2.2: The system shall downscale the cropped 12 km input array to a 5 km 
+    spatial grid using a conditional denoising diffusion probabilistic model.
+  - FR-2.3: The system shall condition generation on auxiliary topographic 
+    data (SRTM DEM) and land-sea masks.
+  - FR-2.4: The model loss function shall enforce physical conservation laws, 
+    penalizing solutions that violate shallow mass divergence and moisture flux 
+    convergence.
+  - FR-2.5: The system shall generate multi-sample stochastic ensemble realizations 
+    to provide $P_{50}$, $P_{90}$, and $P_{99}$ probabilistic threat layers.
+
+5.3 Module 3: Visualization & Alerting Services
+  - FR-3.1: The system shall render an interactive web GIS map displaying 
+    synoptic anomaly tracks, bounding boxes, and downscaled 5 km layers.
+  - FR-3.2: The system shall calculate the maximum amplitude centroid coordinate 
+    and output a categorized circular alert with a 5 km impact radius.
+  - FR-3.3: The system shall expose a REST API delivering GeoJSON payloads and 
+    Cloud Optimized GeoTIFF (COG) rasters.
+
+
+6. NON-FUNCTIONAL REQUIREMENTS (NFR)
+--------------------------------------------------------------------------------
+6.1 Performance & Scalability
+  - NFR-1.1: Stage 1 GNN trajectory inference across a 10-day forecast horizon 
+    shall execute in <= 10 seconds.
+  - NFR-1.2: Stage 2 diffusion sampling for a 500 km x 500 km region shall 
+    complete within <= 45 seconds using accelerated DDIM sampling ($S \le 50$).
+  - NFR-1.3: Total end-to-end execution time from crop to alert generation 
+    shall not exceed 60 seconds on a single NVIDIA A10G or equivalent GPU.
+
+6.2 System Reliability & Fault Tolerance
+  - NFR-2.1: The ingestion engine shall handle missing or corrupted ensemble 
+    members gracefully by re-normalizing weights across available members.
+  - NFR-2.2: If the generative diffusion model fails a physics sanity check 
+    (residual threshold exceeded), the system shall automatically fall back to 
+    a deterministic high-resolution topographic interpolation flagged with 
+    "degraded_mode: true".
+
+6.3 Standards Compliance & Security
+  - NFR-3.1: All external spatial outputs shall conform strictly to the GeoJSON 
+    RFC 7946 standard and OGC raster conventions.
+  - NFR-3.2: API endpoints shall support role-based authentication (OAuth2 / API 
+    keys) and strict rate-limiting to prevent Denial of Service.
+
+
+7. RISK ASSESSMENT & MITIGATION STRATEGY
+--------------------------------------------------------------------------------
+  +----------------------+--------------------+--------------------------------+
+  | Risk Event           | Impact / Likelihood| Mitigation Strategy            |
+  +----------------------+--------------------+--------------------------------+
+  | AI Hallucination of  | Critical / Medium  | Enforce strict physics loss    |
+  | Extreme Rain/Wind    |                    | constraints during training;   |
+  |                      |                    | execute runtime QA filter.     |
+  +----------------------+--------------------+--------------------------------+
+  | Slow Diffusion       | High / Medium      | Utilize accelerated DDIM /     |
+  | Inference Latency    |                    | DPMSolver++ schedulers with    |
+  |                      |                    | step counts <= 50.             |
+  +----------------------+--------------------+--------------------------------+
+  | Data Ingestion Delay | High / Low         | Implement distributed S3/Zarr  |
+  | from Global Feeds    |                    | caching and local mirrored     |
+  |                      |                    | reanalysis buffers.            |
+  +----------------------+--------------------+--------------------------------+
+================================================================================
