@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>VATAWARAN — Meteorological Intelligence Bulletin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+
+      /* ── Design Tokens ── */
+      :root {
+        --paper: #faf7f0;
+        --paper-0: #fefcf7;
+        --ink-deep: #1a1510;
+        --ink-base: #2c2418;
+        --ink-mid: #4a3f2f;
+        --ink-light: #7a6a52;
+        --ink-ghost: #c8b89a;
+        --red: #8b1a1a;
+        --red-2: #b22222;
+        --navy: #1a2744;
+        --forest: #1e3d1e;
+        --forest-2: #2d5a2d;
+        --amber: #5e3c00;
+        --rule: #c0a878;
+        --rule-2: #a08858;
+        --rule-light: #ddd0b8;
+      }
+
+      body {
+        background: var(--paper);
+        font-family: 'EB Garamond', Georgia, serif;
+        color: var(--ink-base);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      }
+
+      #root { width: 100%; height: 100%; position: relative; overflow: hidden; }
+
+      /* ── Scene 1: The Masthead ── */
+      .scene-masthead {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        opacity: 0;
+      }
+      .mast-kicker {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 14px; font-weight: 700;
+        letter-spacing: 6px; text-transform: uppercase;
+        color: var(--red);
+        margin-bottom: 12px;
+      }
+      .mast-title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 120px; font-weight: 900;
+        letter-spacing: 16px; text-transform: uppercase;
+        color: var(--ink-deep);
+        line-height: 1;
+      }
+      .mast-subtitle {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 16px; font-weight: 500;
+        letter-spacing: 5px; text-transform: uppercase;
+        color: var(--ink-mid);
+        margin-top: 20px;
+        overflow: hidden;
+        white-space: nowrap;
+        width: 0;
+      }
+      .mast-ornament {
+        width: 200px; height: 2px;
+        background: linear-gradient(90deg, transparent, var(--rule-2), transparent);
+        margin: 24px 0;
+      }
+      .mast-stamp {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px; font-weight: 700;
+        letter-spacing: 3px; text-transform: uppercase;
+        color: var(--red);
+        border: 2px solid var(--red);
+        padding: 6px 20px;
+        transform: rotate(-3deg);
+        opacity: 0;
+      }
+      .mast-dateline {
+        position: absolute; bottom: 60px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px; color: var(--ink-light);
+        letter-spacing: 2px;
+      }
+
+      /* ── Scene 2: Synoptic Chart ── */
+      .scene-map {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0;
+      }
+      .map-frame {
+        width: 1600px; height: 900px;
+        background: #e8e0d0;
+        border: 3px double var(--rule-2);
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+      }
+      .map-grid {
+        position: absolute; inset: 0;
+        background-image:
+          linear-gradient(var(--rule-light) 1px, transparent 1px),
+          linear-gradient(90deg, var(--rule-light) 1px, transparent 1px);
+        background-size: 80px 80px;
+        opacity: 0.5;
+      }
+      .map-india {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 280px;
+        opacity: 0.12;
+        color: var(--ink-mid);
+      }
+      .map-label {
+        position: absolute; top: 24px; left: 32px;
+        font-family: 'Playfair Display', serif;
+        font-size: 22px; font-weight: 800;
+        letter-spacing: 3px; text-transform: uppercase;
+        color: var(--ink-mid);
+      }
+      .map-label-sub {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px; font-weight: 400;
+        color: var(--ink-light); letter-spacing: 1px;
+        display: block; margin-top: 4px;
+      }
+
+      /* Anomaly tracks */
+      .track {
+        position: absolute;
+        display: flex; align-items: center; gap: 10px;
+        opacity: 0;
+      }
+      .track-line {
+        width: 0; height: 3px;
+        border-radius: 2px;
+      }
+      .track-dot {
+        width: 14px; height: 14px;
+        border-radius: 50%;
+        border: 2px solid;
+        flex-shrink: 0;
+      }
+      .track-info {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px; font-weight: 600;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+      .track-efi {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 18px; font-weight: 700;
+        margin-left: 8px;
+      }
+      .track.cyclone { top: 55%; left: 55%; }
+      .track.cyclone .track-line { background: var(--red); }
+      .track.cyclone .track-dot { border-color: var(--red); background: rgba(139,26,26,0.2); }
+      .track.cyclone .track-info { color: var(--red); }
+      .track.cyclone .track-efi { color: var(--red); }
+
+      .track.heat { top: 32%; left: 30%; }
+      .track.heat .track-line { background: var(--amber); }
+      .track.heat .track-dot { border-color: var(--amber); background: rgba(122,79,0,0.2); }
+      .track.heat .track-info { color: var(--amber); }
+      .track.heat .track-efi { color: var(--amber); }
+
+      .track.rain { top: 25%; left: 42%; }
+      .track.rain .track-line { background: var(--navy); }
+      .track.rain .track-dot { border-color: var(--navy); background: rgba(26,39,68,0.2); }
+      .track.rain .track-info { color: var(--navy); }
+      .track.rain .track-efi { color: var(--navy); }
+
+      /* ── Scene 3: Diffusion Engine ── */
+      .scene-diffusion {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        opacity: 0;
+      }
+      .diff-header {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 14px; font-weight: 600;
+        letter-spacing: 3px; text-transform: uppercase;
+        color: var(--ink-mid);
+        margin-bottom: 32px;
+      }
+      .diff-counter-wrap {
+        display: flex; align-items: baseline; gap: 12px;
+        margin-bottom: 24px;
+      }
+      .diff-counter {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 140px; font-weight: 700;
+        color: var(--ink-deep);
+        line-height: 1;
+        letter-spacing: -4px;
+      }
+      .diff-denom {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 24px; color: var(--ink-light);
+      }
+      .diff-bar {
+        display: flex; gap: 4px;
+        margin-bottom: 20px;
+      }
+      .diff-seg {
+        width: 48px; height: 8px;
+        background: var(--rule-light);
+        border-radius: 2px;
+        transition: background 0.15s;
+      }
+      .diff-seg.filled { background: var(--forest-2); }
+      .diff-substep {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px; color: var(--ink-light);
+        letter-spacing: 1px;
+      }
+      .diff-badge {
+        margin-top: 28px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 14px; font-weight: 700;
+        letter-spacing: 2px;
+        color: var(--forest-2);
+        border: 2px solid var(--forest-2);
+        padding: 6px 20px;
+        border-radius: 3px;
+        opacity: 0;
+      }
+
+      /* ── Scene 4: Government Feeds ── */
+      .scene-gov {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        opacity: 0;
+      }
+      .gov-header {
+        font-family: 'Playfair Display', serif;
+        font-size: 32px; font-weight: 800;
+        letter-spacing: 4px; text-transform: uppercase;
+        color: var(--ink-mid);
+        margin-bottom: 48px;
+      }
+      .gov-pills {
+        display: flex; flex-direction: column; gap: 16px;
+        align-items: center;
+      }
+      .gov-pill {
+        display: flex; align-items: center; gap: 14px;
+        background: var(--paper-0);
+        border: 1.5px solid var(--rule);
+        border-radius: 4px;
+        padding: 12px 28px;
+        opacity: 0;
+        min-width: 480px;
+      }
+      .gov-pill-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        background: var(--forest-2);
+      }
+      .gov-pill-name {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 15px; font-weight: 500;
+        color: var(--ink-base);
+        flex: 1;
+      }
+      .gov-pill-tag {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px; font-weight: 700;
+        letter-spacing: 1.5px;
+        color: var(--forest-2);
+        border: 1px solid var(--forest-2);
+        padding: 2px 10px;
+        border-radius: 2px;
+      }
+      .gov-summary {
+        margin-top: 40px;
+        font-family: 'EB Garamond', serif;
+        font-size: 22px; font-style: italic;
+        color: var(--ink-light);
+        opacity: 0;
+      }
+
+      /* ── Scene 5: The Verdict ── */
+      .scene-verdict {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        opacity: 0;
+      }
+      .verdict-line {
+        font-family: 'Playfair Display', serif;
+        font-size: 56px; font-weight: 800;
+        color: var(--ink-deep);
+        letter-spacing: 2px;
+        margin: 6px 0;
+        opacity: 0;
+      }
+      .verdict-ornament {
+        width: 160px; height: 2px;
+        background: linear-gradient(90deg, transparent, var(--rule-2), transparent);
+        margin: 28px 0;
+        opacity: 0;
+      }
+      .verdict-cap {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 14px; font-weight: 700;
+        letter-spacing: 3px;
+        color: var(--navy);
+        border: 2px solid var(--navy);
+        padding: 8px 24px;
+        opacity: 0;
+      }
+      .verdict-sih {
+        margin-top: 20px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px; font-weight: 600;
+        letter-spacing: 3px;
+        color: var(--red);
+        opacity: 0;
+      }
+      .verdict-wordmark {
+        margin-top: 32px;
+        font-family: 'Playfair Display', serif;
+        font-size: 28px; font-weight: 900;
+        letter-spacing: 8px; text-transform: uppercase;
+        color: var(--ink-deep);
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="22" data-width="1920" data-height="1080">
+
+    <!-- Music -->
+    <audio id="music" data-start="0" data-duration="22" data-track-index="10" data-volume="0.35" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"></audio>
+
+      <!-- ═══ Scene 1: The Masthead (0–3s) ═══ -->
+      <div class="scene-masthead clip" id="sc1" data-start="0" data-duration="3.5" data-track-index="0">
+        <span class="mast-kicker" id="sc1-kicker">Ministry of Earth Sciences</span>
+        <h1 class="mast-title" id="sc1-title">VATAWARAN</h1>
+        <div class="mast-ornament" id="sc1-orn"></div>
+        <div class="mast-subtitle" id="sc1-sub">Meteorological Intelligence Bulletin</div>
+        <div class="mast-stamp" id="sc1-stamp">Classified · SIH 2026</div>
+        <div class="mast-dateline" id="sc1-date">Vol. I · Forecast Cycle: 2026-09-30 00:00 UTC · NEPS-G 12 km Ensemble</div>
+      </div>
+
+      <!-- ═══ Scene 2: Synoptic Chart (3–8s) ═══ -->
+      <div class="scene-map clip" id="sc2" data-start="3" data-duration="5.5" data-track-index="0">
+        <div class="map-frame">
+          <div class="map-grid"></div>
+          <div class="map-india">🗺</div>
+          <div class="map-label">Synoptic Anomaly Chart<span class="map-label-sub">EFI-Filtered Trajectories · 48h – 240h Lead Window</span></div>
+
+          <div class="track cyclone" id="trk-cyc">
+            <div class="track-dot"></div>
+            <div class="track-line" id="trk-cyc-line"></div>
+            <span class="track-info">BOB-CYCLONE-2026-01</span>
+            <span class="track-efi">0.96</span>
+          </div>
+          <div class="track heat" id="trk-heat">
+            <div class="track-dot"></div>
+            <div class="track-line" id="trk-heat-line"></div>
+            <span class="track-info">NWI-HEATWAVE-2026-03</span>
+            <span class="track-efi">0.91</span>
+          </div>
+          <div class="track rain" id="trk-rain">
+            <div class="track-dot"></div>
+            <div class="track-line" id="trk-rain-line"></div>
+            <span class="track-info">WHR-RAIN-2026-07</span>
+            <span class="track-efi">0.88</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ Scene 3: Diffusion Engine (8–13s) ═══ -->
+      <div class="scene-diffusion clip" id="sc3" data-start="8" data-duration="5.5" data-track-index="0">
+        <div class="diff-header">⚙ Stage II · Diffusion Downscaling</div>
+        <div class="diff-counter-wrap">
+          <div class="diff-counter" id="diff-num">00</div>
+          <div class="diff-denom">of 50 DDIM Steps</div>
+        </div>
+        <div class="diff-bar" id="diff-bar">
+          <!-- 20 segments -->
+        </div>
+        <div class="diff-substep" id="diff-sub">Initializing noise tensor...</div>
+        <div class="diff-badge" id="diff-badge">5 KM RESOLUTION · PHYSICS QA PASSED</div>
+      </div>
+
+      <!-- ═══ Scene 4: Government Feeds (13–17s) ═══ -->
+      <div class="scene-gov clip" id="sc4" data-start="13" data-duration="4.5" data-track-index="0">
+        <div class="gov-header">Government Telemetry Online</div>
+        <div class="gov-pills">
+          <div class="gov-pill" id="gp1"><span class="gov-pill-dot"></span><span class="gov-pill-name">NCMRWF NEPS-G (12 km)</span><span class="gov-pill-tag">SYNCED</span></div>
+          <div class="gov-pill" id="gp2"><span class="gov-pill-dot"></span><span class="gov-pill-name">IMDAA Baseline (1979–2020)</span><span class="gov-pill-tag">ONLINE</span></div>
+          <div class="gov-pill" id="gp3"><span class="gov-pill-dot"></span><span class="gov-pill-name">IMD Ground AWS Telemetry</span><span class="gov-pill-tag">ONLINE</span></div>
+          <div class="gov-pill" id="gp4"><span class="gov-pill-dot"></span><span class="gov-pill-name">ISRO MOSDAC (INSAT-3DR)</span><span class="gov-pill-tag">ONLINE</span></div>
+          <div class="gov-pill" id="gp5"><span class="gov-pill-dot"></span><span class="gov-pill-name">NDMA Sachet (CAP v1.2)</span><span class="gov-pill-tag">READY</span></div>
+        </div>
+        <div class="gov-summary" id="gov-sum">14 Ground Stations · 5 Government Agencies · 1 Engine</div>
+      </div>
+
+      <!-- ═══ Scene 5: The Verdict (17–22s) ═══ -->
+      <div class="scene-verdict clip" id="sc5" data-start="17" data-duration="5" data-track-index="0">
+        <div class="verdict-line" id="vl1">5 km resolution.</div>
+        <div class="verdict-line" id="vl2">10-day forecast.</div>
+        <div class="verdict-line" id="vl3">One engine.</div>
+        <div class="verdict-ornament" id="v-orn"></div>
+        <div class="verdict-cap" id="v-cap">ITU-T X.1303 COMPLIANT</div>
+        <div class="verdict-sih" id="v-sih">SIH 2026 · PROBLEM STATEMENT #26078</div>
+        <div class="verdict-wordmark" id="v-wm">VATAWARAN</div>
+      </div>
+
+    </div>
+
+    <script>
+      // Build diffusion bar segments
+      const diffBar = document.getElementById('diff-bar');
+      for (let i = 0; i < 20; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'diff-seg';
+        seg.id = `dseg-${i}`;
+        diffBar.appendChild(seg);
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      // ═══ Scene 1: The Masthead (0–3s) ═══
+      tl.to('#sc1', { opacity: 1, duration: 0.01 }, 0);
+      // Title stamps in  // beat-locked: 0.56s
+      tl.fromTo('#sc1-title', { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.25, ease: 'power4.out' }, 0.2);
+      tl.fromTo('#sc1-kicker', { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.4 }, 0.1);
+      tl.fromTo('#sc1-orn', { scaleX: 0 }, { scaleX: 1, duration: 0.5 }, 0.5);
+      // Subtitle typewriter
+      tl.to('#sc1-sub', { width: '580px', duration: 1.0, ease: 'steps(35)' }, 0.7);
+      // Classified stamp slams in  // beat-locked: 2.19s
+      tl.fromTo('#sc1-stamp', { opacity: 0, scale: 1.5 }, { opacity: 1, scale: 1, duration: 0.15, ease: 'power4.out' }, 2.1);
+      // Dateline
+      tl.fromTo('#sc1-date', { opacity: 0 }, { opacity: 0.6, duration: 0.4 }, 2.4);
+      // Scene 1 exit
+      tl.to('#sc1', { opacity: 0, duration: 0.3 }, 2.9);
+
+      // ═══ Scene 2: Synoptic Chart (3–8s) ═══
+      tl.to('#sc2', { opacity: 1, duration: 0.3 }, 3.0);
+      // Cyclone track  // beat-locked: 3.82s
+      tl.to('#trk-cyc', { opacity: 1, duration: 0.2 }, 3.7);
+      tl.to('#trk-cyc-line', { width: '180px', duration: 0.8, ease: 'power2.out' }, 3.8);
+      // Heatwave track  // beat-grid: 5.34s
+      tl.to('#trk-heat', { opacity: 1, duration: 0.2 }, 5.2);
+      tl.to('#trk-heat-line', { width: '140px', duration: 0.8, ease: 'power2.out' }, 5.3);
+      // Rain track  // beat-grid: 6.56s
+      tl.to('#trk-rain', { opacity: 1, duration: 0.2 }, 6.5);
+      tl.to('#trk-rain-line', { width: '120px', duration: 0.8, ease: 'power2.out' }, 6.6);
+      // Scene 2 exit
+      tl.to('#sc2', { opacity: 0, duration: 0.3 }, 7.8);
+
+      // ═══ Scene 3: Diffusion Engine (8–13s) ═══
+      tl.to('#sc3', { opacity: 1, duration: 0.3 }, 8.0);
+
+      // Counter ticks and bar fills
+      const steps = [0, 5, 10, 18, 25, 32, 40, 45, 50];
+      const substeps = [
+        'Initializing noise tensor...',
+        'Sampling Gaussian prior...',
+        'Denoising latent field...',
+        'Conditioning on topography...',
+        'DDIM reverse step 25/50...',
+        'Applying physics constraints...',
+        'Mass divergence: 0.012',
+        'Moisture flux: 0.08',
+        'Physics QA: PASSED'
+      ];
+      steps.forEach((step, i) => {
+        const t = 8.3 + i * 0.5;
+        tl.to('#diff-num', {
+          textContent: String(step).padStart(2, '0'),
+          duration: 0.01,
+          snap: { textContent: 1 },
+        }, t);
+        tl.to('#diff-sub', { textContent: substeps[i], duration: 0.01 }, t);
+        // Fill bar segments
+        const filled = Math.round((step / 50) * 20);
+        for (let s = 0; s < filled; s++) {
+          tl.to(`#dseg-${s}`, { className: 'diff-seg filled', duration: 0.01 }, t);
+        }
+      });
+
+      // Badge appears  // beat-locked: 13.11s
+      tl.to('#diff-badge', { opacity: 1, duration: 0.2, ease: 'power2.out' }, 12.6);
+      // Scene 3 exit
+      tl.to('#sc3', { opacity: 0, duration: 0.3 }, 13.0);
+
+      // ═══ Scene 4: Government Feeds (13–17s) ═══
+      tl.to('#sc4', { opacity: 1, duration: 0.3 }, 13.2);
+      // Pills arrive one by one  // beat-grid: 13.64, 14.20, 14.73, 15.29, 15.84
+      ['#gp1', '#gp2', '#gp3', '#gp4', '#gp5'].forEach((id, i) => {
+        const t = 13.6 + i * 0.55;
+        tl.fromTo(id, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }, t);
+      });
+      // Summary line
+      tl.to('#gov-sum', { opacity: 1, duration: 0.4 }, 16.5);
+      // Scene 4 exit
+      tl.to('#sc4', { opacity: 0, duration: 0.3 }, 17.0);
+
+      // ═══ Scene 5: The Verdict (17–22s) ═══
+      tl.to('#sc5', { opacity: 1, duration: 0.3 }, 17.2);
+      // Verdict lines  // beat-grid: 17.47, 18.56, 19.66
+      tl.fromTo('#vl1', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }, 17.4);
+      tl.fromTo('#vl2', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }, 18.5);
+      tl.fromTo('#vl3', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }, 19.6);
+      // Ornament
+      tl.fromTo('#v-orn', { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.3, ease: 'power2.out' }, 20.0);
+      // CAP badge
+      tl.fromTo('#v-cap', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.2 }, 20.3);
+      // SIH stamp
+      tl.to('#v-sih', { opacity: 1, duration: 0.2 }, 20.6);
+      // Wordmark  // beat-locked: 22.37s (hold to end)
+      tl.to('#v-wm', { opacity: 1, duration: 0.3 }, 20.9);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines['main'] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

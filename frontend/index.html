@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="VATAWARAN — AI-Driven Spatio-Temporal Extreme Weather Tracking & Downscaling Engine. Smart India Hackathon 2026, Problem Statement #26078." />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VATAWARAN — AI-Driven Spatio-Temporal Extreme Weather Tracking & Downscaling Engine. Smart India Hackathon 2026, Problem Statement #26078.">
   <title>VATAWARAN · Meteorological Intelligence Bulletin</title>
 
   <!-- ── Fonts ─────────────────────────────────────────────────── -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
-  <link href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" rel="stylesheet">
 
   <style>
     /* ═══════════════════════════════════════════════════════════
@@ -334,6 +334,8 @@
       flex: 1;
       overflow-y: auto;
       padding: 12px 14px;
+      margin: 0;
+      list-style: none;
       scrollbar-width: thin;
       scrollbar-color: var(--rule-light) transparent;
       display: flex;
@@ -449,6 +451,7 @@
       margin-bottom: 10px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -616,6 +619,11 @@
       margin-bottom: 6px;
     }
     .legend-row:last-child { margin-bottom: 0; }
+    .legend-row.divider {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid var(--rule-faint);
+    }
     .legend-swatch {
       width: 18px; height: 6px;
       border: 1px solid;
@@ -1135,7 +1143,238 @@
     /* ═══════════════════════════════════════════════════════════
        MAP SEPIA TINT (vintage cartography feel)
     ═══════════════════════════════════════════════════════════ */
-    .maplibregl-canvas { filter: sepia(0.12) contrast(0.95); }
+    /* ═══════════════════════════════════════════════════════════
+       GOVERNMENT TELEMETRY RIBBON & CAP STYLES
+    ═══════════════════════════════════════════════════════════ */
+    .gov-ribbon {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 24px;
+      background: var(--paper-2);
+      border-bottom: 1px solid var(--rule-light);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      overflow-x: auto;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .gov-ribbon-label {
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .gov-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2.5px 8px;
+      border: 1px solid var(--rule-light);
+      border-radius: 2px;
+      background: var(--paper-0);
+      color: var(--ink-mid);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      cursor: default;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .gov-pill.interactive {
+      cursor: pointer;
+    }
+    .gov-pill.interactive:hover {
+      border-color: var(--rule-2);
+      background: var(--paper-1);
+      box-shadow: 1px 1px 0 var(--rule-light);
+    }
+    .gov-pill-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--forest-2);
+    }
+    .gov-pill.alert .gov-pill-dot {
+      background: var(--red-2);
+      animation: blink-dot 1.8s infinite;
+    }
+    .gov-pill.live .gov-pill-dot {
+      background: #2b7a78;
+    }
+    .pill-tag {
+      font-size: 7.5px;
+      padding: 1px 4px;
+      border-radius: 2px;
+      background: var(--paper-3);
+      color: var(--ink-light);
+      font-weight: 700;
+    }
+    .pill-tag.ready {
+      background: var(--red);
+      color: #fff;
+    }
+    .pill-tag.on {
+      background: var(--forest-2);
+      color: #fff;
+    }
+
+    /* NDMA Sachet CAP Dispatch Card */
+    .cap-dispatch-card {
+      border: 1.5px solid var(--red-2);
+      background: #fffdfa;
+      padding: 12px;
+      margin-top: 12px;
+      position: relative;
+    }
+    .cap-dispatch-card::before {
+      content: 'ITU-T X.1303 COMPLIANT';
+      position: absolute;
+      top: -7px;
+      right: 10px;
+      background: var(--red-2);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 7.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      letter-spacing: 1px;
+    }
+    .cap-hed {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--red);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .cap-desc {
+      font-family: var(--font-body);
+      font-size: 11.5px;
+      color: var(--ink-mid);
+      line-height: 1.5;
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+    .cap-btn-row {
+      display: flex;
+      gap: 8px;
+    }
+    .cap-action-btn {
+      flex: 1;
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border: 1px solid;
+      border-radius: 2px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      background: var(--paper-0);
+    }
+    .cap-action-btn.export {
+      color: var(--red);
+      border-color: var(--red);
+    }
+    .cap-action-btn.export:hover {
+      background: var(--red);
+      color: #fff;
+    }
+    .cap-action-btn.view {
+      color: var(--navy-2);
+      border-color: var(--navy-light);
+    }
+    .cap-action-btn.view:hover {
+      background: var(--navy-2);
+      color: #fff;
+    }
+
+    /* Modal Backdrop & Card */
+    .gov-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 21, 16, 0.65);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .gov-modal-backdrop.open {
+      display: flex;
+    }
+    .gov-modal-card {
+      width: 90%;
+      max-width: 680px;
+      max-height: 85vh;
+      background: var(--paper-0);
+      border: 2px solid var(--ink-mid);
+      box-shadow: 6px 6px 0 var(--ink-deep);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .gov-modal-header {
+      padding: 12px 18px;
+      background: var(--paper-2);
+      border-bottom: 2px solid var(--rule-2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .gov-modal-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink-deep);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .gov-modal-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: var(--ink-light);
+      cursor: pointer;
+      line-height: 1;
+    }
+    .gov-modal-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      font-family: var(--font-body);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--ink-base);
+    }
+    .gov-code-block {
+      background: #24221f;
+      color: #f1ebd8;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 12px;
+      border-radius: 3px;
+      overflow-x: auto;
+      max-height: 360px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .station-marker {
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .station-marker:hover {
+      transform: scale(1.15);
+    }
   </style>
 </head>
 <body>
@@ -1143,7 +1382,7 @@
 <!-- ═══════════════════════════════════════════════════════════════════
      HEADER — Newspaper Masthead
 ═══════════════════════════════════════════════════════════════════ -->
-<header role="banner">
+<header>
   <div class="hdr-dateline">
     <span class="dateline-left" id="cycle-badge">Vol. I &nbsp;·&nbsp; 00Z Forecast Cycle</span>
     <span class="dateline-center">⬡ NCMRWF · NEPS-G Ensemble · 12 km Resolution ⬡</span>
@@ -1178,9 +1417,43 @@
 </header>
 
 <!-- ═══════════════════════════════════════════════════════════════════
+     GOVERNMENT TELEMETRY & DISSEMINATION RIBBON
+═══════════════════════════════════════════════════════════════════ -->
+<section class="gov-ribbon" aria-label="National Weather & Disaster Feeds">
+  <div class="gov-ribbon-label">
+    <span>🏛️ Gov Feeds:</span>
+  </div>
+  <div class="gov-pill interactive" onclick="vat.showGovSourcesModal()" title="View all upstream and downstream Government API statuses">
+    <span class="gov-pill-dot"></span>
+    <span>NCMRWF NEPS-G (12 km)</span>
+    <span class="pill-tag">SYNCED</span>
+  </div>
+  <div class="gov-pill interactive" onclick="vat.showGovSourcesModal()" title="40-year IMDAA Baseline (1979-2020)">
+    <span class="gov-pill-dot"></span>
+    <span>IMDAA Baseline</span>
+    <span class="pill-tag">ONLINE</span>
+  </div>
+  <div class="gov-pill interactive live" onclick="vat.toggleImdLayer()" id="pill-imd" title="Toggle ground telemetry from IMD Automated Weather Stations (AWS)">
+    <span class="gov-pill-dot"></span>
+    <span>IMD Ground AWS Telemetry</span>
+    <span class="pill-tag on" id="imd-toggle-tag">ON</span>
+  </div>
+  <div class="gov-pill interactive" onclick="vat.showMosdacModal()" title="View ISRO SAC / MOSDAC INSAT-3DR and INSAT-3DS products">
+    <span class="gov-pill-dot"></span>
+    <span>ISRO MOSDAC (INSAT-3DR)</span>
+    <span class="pill-tag">ONLINE</span>
+  </div>
+  <div class="gov-pill interactive alert" onclick="vat.viewCap()" title="National Disaster Management Authority (NDMA) Sachet CAP v1.2 Gateway">
+    <span class="gov-pill-dot"></span>
+    <span>NDMA Sachet (CAP v1.2)</span>
+    <span class="pill-tag ready">READY</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
      MAIN
 ═══════════════════════════════════════════════════════════════════ -->
-<main role="main">
+<main>
 
   <!-- ── Left Sidebar ────────────────────────────────────────────── -->
   <aside class="sidebar" aria-label="Active anomaly dossiers">
@@ -1190,9 +1463,9 @@
       </div>
       <p class="sb-count-line" id="anomaly-count-line">Loading bulletin…</p>
     </div>
-    <div class="anomaly-list" id="anomaly-list" role="list">
+    <ul class="anomaly-list" id="anomaly-list">
       <!-- Injected by JS -->
-    </div>
+    </ul>
   </aside>
 
   <!-- ── Map ────────────────────────────────────────────────────── -->
@@ -1218,7 +1491,7 @@
     </div>
 
     <!-- Legend -->
-    <div class="hud legend-hud" role="complementary" aria-label="Map legend">
+    <aside class="hud legend-hud" aria-label="Map legend">
       <p class="legend-hed">Anomaly Classification</p>
       <div class="legend-row">
         <span class="legend-swatch cyclone"></span>
@@ -1232,11 +1505,11 @@
         <span class="legend-swatch rain"></span>
         <span class="legend-legend-text">Extreme Precipitation</span>
       </div>
-      <div class="legend-row" style="margin-top:6px; padding-top:6px; border-top:1px solid var(--rule-faint)">
+      <div class="legend-row divider">
         <span class="legend-swatch ds"></span>
         <span class="legend-legend-text">5 km Downscaled Field</span>
       </div>
-    </div>
+    </aside>
 
     <!-- Pipeline -->
     <div class="hud pipeline-hud" id="pipeline-hud" role="status" aria-label="Processing pipeline status">
@@ -1271,6 +1544,21 @@
   </aside>
 
 </main>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     GOVERNMENT TELEMETRY & CAP MODAL
+═══════════════════════════════════════════════════════════════════ -->
+<div class="gov-modal-backdrop" id="gov-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="gov-modal-card">
+    <div class="gov-modal-header">
+      <div class="gov-modal-title" id="modal-title">Government Telemetry Feed</div>
+      <button class="gov-modal-close" type="button" onclick="vat.closeModal()" aria-label="Close dialog">&times;</button>
+    </div>
+    <div class="gov-modal-body" id="modal-body">
+      <!-- Injected by JavaScript -->
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════════════════
      SCRIPTS
@@ -1324,7 +1612,7 @@
     attributionControl: false,
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
-  map.on('load', () => { fetchStatus(); fetchTracks(); });
+  map.on('load', () => { fetchStatus(); fetchTracks(); fetchImdStations(); });
 
   /* ── System Status ────────────────────────────────────────── */
   async function fetchStatus() {
@@ -1383,10 +1671,9 @@
         `<div class="efi-ruled-seg ${i < filledSegs ? `filled ${cls}` : ''}"></div>`
       ).join('');
 
-      const card = document.createElement('div');
+      const card = document.createElement('li');
       card.className = `a-card ${cls}`;
       card.dataset.id = a.anomaly_id;
-      card.setAttribute('role', 'listitem');
       card.setAttribute('tabindex', '0');
       card.innerHTML = `
         <div class="card-headline">
@@ -1559,6 +1846,36 @@
         </table>
       </div>
 
+      <div class="d-section" style="animation-delay:0.08s">
+        <div class="d-hed">
+          <div class="d-hed-line"></div>
+          <span class="d-hed-label">Government Ingestion &amp; Dissemination</span>
+          <div class="d-hed-line"></div>
+        </div>
+        <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mid); display:flex; flex-direction:column; gap:5px; margin-top:6px; background:var(--paper-2); padding:8px; border:1px solid var(--rule-light);">
+          <div style="display:flex; justify-content:space-between;">
+            <span>Upstream NWP Model:</span>
+            <strong style="color:var(--navy-2);">NCMRWF NEPS-G (12 km)</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>Climatological Base:</span>
+            <span>IMDAA 12 km (1979–2020)</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>Dissemination Format:</span>
+            <span style="color:var(--red); font-weight:700;">NDMA Sachet (CAP v1.2)</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <button class="cap-action-btn export" onclick="vat.exportCap('${a.anomaly_id}')" title="Export ITU-T X.1303 CAP v1.2 XML">
+            📥 Export CAP XML
+          </button>
+          <button class="cap-action-btn view" onclick="vat.viewCap('${a.anomaly_id}')" title="Inspect NDMA Sachet JSON payload">
+            📋 View Sachet JSON
+          </button>
+        </div>
+      </div>
+
       ${dsHtml ? `<div class="d-section" style="animation-delay:0.10s">${dsHtml}</div>` : ''}
     `;
   }
@@ -1609,6 +1926,22 @@
       <div class="advisory-notice">
         <p class="advisory-hed">⚠ Operational Advisory</p>
         <p class="advisory-body">${props.advisory || ''}</p>
+      </div>
+
+      <div class="cap-dispatch-card">
+        <div class="cap-hed">
+          <span style="font-size:12px;">🚨</span>
+          <span>NDMA Sachet · CAP v1.2 Dispatch</span>
+        </div>
+        <p class="cap-desc">Standardized ITU-T X.1303 Civil Protection Alert generated for NDRF &amp; State Emergency Operations with 5 km impact radius.</p>
+        <div class="cap-btn-row">
+          <button class="cap-action-btn export" onclick="vat.exportCap('${m.anomaly_id || selectedId}')">
+            📥 Download CAP XML
+          </button>
+          <button class="cap-action-btn view" onclick="vat.viewCap('${m.anomaly_id || selectedId}')">
+            📋 View Sachet JSON
+          </button>
+        </div>
       </div>
     `;
   }
@@ -1740,9 +2073,188 @@
     map.addLayer({ id: `impact-line-${id}`, type: 'line', source: `impact-${id}`, paint: { 'line-color': '#8b1a1a', 'line-width': 1.5, 'line-opacity': 0.6, 'line-dasharray': [4, 2] } });
   }
 
+  /* ── Government API Telemetry & CAP Modules ─────────────── */
+  let imdMarkers = [];
+  let imdLayerVisible = true;
+
+  async function fetchImdStations() {
+    try {
+      const res = await fetch(`${API}/api/v1/gov/imd/stations`);
+      const stations = await res.json();
+      renderImdStations(stations);
+    } catch (err) {
+      console.warn('IMD telemetry offline:', err);
+    }
+  }
+
+  function renderImdStations(stations) {
+    clearImdMarkers();
+    stations.forEach(st => {
+      const el = document.createElement('div');
+      el.className = 'station-marker';
+      el.innerHTML = `
+        <div style="background:var(--paper-0); border:1.5px solid var(--navy-2); border-radius:2px; padding:2px 5px; font-family:var(--font-mono); font-size:8px; font-weight:700; color:var(--navy-2); box-shadow:1.5px 1.5px 0 var(--rule-light); white-space:nowrap; display:flex; align-items:center; gap:3px;">
+          <span style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#2b7a78;"></span>
+          ${st.station_name.split(' ')[0]} ${st.temp_c}°C
+        </div>
+      `;
+
+      const popup = new maplibregl.Popup({ offset: 12 }).setHTML(`
+        <div class="popup-hed">IMD Ground AWS Telemetry</div>
+        <div style="font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--ink-deep); margin-bottom:2px;">${st.station_name}</div>
+        <div style="font-family:var(--font-mono); font-size:8px; color:var(--ink-light); margin-bottom:8px;">ID: ${st.station_id} · ${st.district}, ${st.state}</div>
+        <div class="popup-row"><span>Air Temp:</span><strong>${st.temp_c} °C</strong></div>
+        <div class="popup-row"><span>24h Rainfall:</span><strong>${st.rain_24h_mm} mm</strong></div>
+        <div class="popup-row"><span>Wind Speed:</span><strong>${st.wind_speed_kmh} km/h (${st.wind_direction_deg}°)</strong></div>
+        <div class="popup-row"><span>Surface Pressure:</span><strong>${st.pressure_hpa} hPa</strong></div>
+        <div class="popup-row" style="border-top:1px dashed var(--rule-light); padding-top:4px; margin-top:4px;">
+          <span>NWP Bias ΔT:</span>
+          <strong style="color:${st.model_bias_temp_c >= 0 ? 'var(--red)' : 'var(--navy)'};">${st.model_bias_temp_c >= 0 ? '+' : ''}${st.model_bias_temp_c} °C</strong>
+        </div>
+        <div style="margin-top:6px; font-family:var(--font-mono); font-size:7.5px; color:var(--forest-2); text-transform:uppercase; letter-spacing:1px; text-align:right;">✓ ${st.status}</div>
+      `);
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([st.longitude, st.latitude])
+        .setPopup(popup)
+        .addTo(map);
+
+      imdMarkers.push(marker);
+    });
+  }
+
+  function clearImdMarkers() {
+    imdMarkers.forEach(m => m.remove());
+    imdMarkers = [];
+  }
+
+  function toggleImdLayer() {
+    const tag = document.getElementById('imd-toggle-tag');
+    if (imdLayerVisible) {
+      clearImdMarkers();
+      imdLayerVisible = false;
+      if (tag) { tag.textContent = 'OFF'; tag.classList.remove('on'); }
+    } else {
+      fetchImdStations();
+      imdLayerVisible = true;
+      if (tag) { tag.textContent = 'ON'; tag.classList.add('on'); }
+    }
+  }
+
+  function exportCap(anomalyId) {
+    const id = anomalyId || selectedId || (anomalies[0]?.anomaly_id);
+    if (!id) return;
+    window.open(`${API}/api/v1/gov/cap/export/${id}`, '_blank');
+  }
+
+  async function viewCap(anomalyId) {
+    const id = anomalyId || selectedId || (anomalies[0]?.anomaly_id);
+    if (!id) return;
+    try {
+      const res = await fetch(`${API}/api/v1/gov/cap/alerts`);
+      const alerts = await res.json();
+      const alert = alerts.find(a => a.identifier.includes(id)) || alerts[0];
+      if (!alert) throw new Error('No active alert found');
+      showModal(`NDMA Sachet CAP v1.2 Payload · ${alert.identifier}`, `
+        <div style="margin-bottom:12px; font-family:var(--font-mono); font-size:10px; color:var(--ink-light); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <span><strong>Sender:</strong> ${alert.sender}</span>
+          <span><strong>Sent:</strong> ${alert.sent}</span>
+          <span><strong>Urgency:</strong> <span style="color:var(--red); font-weight:700;">${alert.urgency}</span></span>
+          <span><strong>Severity:</strong> <span style="color:var(--red-2); font-weight:700;">${alert.severity}</span></span>
+        </div>
+        <p style="font-weight:700; color:var(--red); margin-bottom:6px; font-family:var(--font-display); font-size:13px;">${alert.headline}</p>
+        <p style="margin-bottom:10px; font-style:italic; color:var(--ink-mid); font-size:12px;">${alert.instruction}</p>
+        <div style="margin-bottom:6px; font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1px; color:var(--ink-light); text-transform:uppercase;">Standard ITU-T X.1303 CAP JSON Document:</div>
+        <pre class="gov-code-block">${JSON.stringify(alert, null, 2)}</pre>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+          <button class="cap-action-btn export" onclick="vat.exportCap('${id}')">Download CAP XML File</button>
+        </div>
+      `);
+    } catch (err) {
+      alert('Failed to load CAP alert: ' + err.message);
+    }
+  }
+
+  async function showMosdacModal() {
+    try {
+      const res = await fetch(`${API}/api/v1/gov/mosdac/satellite`);
+      const products = await res.json();
+      const rows = products.map(p => `
+        <div style="border:1px solid var(--rule-light); padding:10px; margin-bottom:10px; background:var(--paper-1);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <strong style="font-family:var(--font-display); color:var(--ink-deep); font-size:12px;">${p.satellite} · ${p.product_name}</strong>
+            <span style="font-family:var(--font-mono); font-size:8.5px; background:var(--forest-2); color:#fff; padding:1px 5px; border-radius:2px;">ONLINE</span>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:9px; color:var(--ink-light); margin-bottom:6px;">Sensor: ${p.sensor} · Resolution: ${p.resolution_km} km · Coverage: ${p.coverage}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-family:var(--font-mono); font-size:9.5px; background:var(--paper-2); padding:6px;">
+            <div><span style="color:var(--ink-ghost); font-size:7.5px; display:block;">CLOUD TOP TEMP</span><strong>${p.cloud_top_temp_c}°C</strong></div>
+            <div><span style="color:var(--ink-ghost); font-size:7.5px; display:block;">MAX HE RAIN RATE</span><strong>${p.max_rain_rate_mmh} mm/h</strong></div>
+            <div><span style="color:var(--ink-ghost); font-size:7.5px; display:block;">OUTGOING LW RAD</span><strong>${p.olr_wm2} W/m²</strong></div>
+          </div>
+        </div>
+      `).join('');
+
+      showModal('ISRO Space Applications Centre (SAC) · MOSDAC Feeds', `
+        <p style="font-style:italic; color:var(--ink-light); margin-bottom:12px;">Half-hourly geostationary earth observation streams from INSAT-3DR and INSAT-3DS satellites:</p>
+        ${rows}
+      `);
+    } catch (err) {
+      alert('Failed to load MOSDAC data: ' + err.message);
+    }
+  }
+
+  async function showGovSourcesModal() {
+    try {
+      const res = await fetch(`${API}/api/v1/gov/sources`);
+      const sources = await res.json();
+      const rows = sources.map(s => `
+        <div style="border:1px solid var(--rule-light); padding:10px; margin-bottom:10px; background:var(--paper-1);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <strong style="font-family:var(--font-display); color:var(--ink-deep); font-size:12px;">${s.agency}</strong>
+            <span style="font-family:var(--font-mono); font-size:8.5px; background:${s.status === 'SYNCED' || s.status === 'ONLINE' ? 'var(--forest-2)' : 'var(--amber-2)'}; color:#fff; padding:1px 5px; border-radius:2px;">${s.status} (${s.latency_ms}ms)</span>
+          </div>
+          <div style="font-weight:600; color:var(--navy-2); font-size:11px; margin-bottom:4px;">${s.name}</div>
+          <p style="font-size:11px; font-style:italic; color:var(--ink-mid); margin-bottom:6px;">${s.description}</p>
+          <div style="font-family:var(--font-mono); font-size:8.5px; color:var(--ink-light);">
+            <div><strong>Protocol:</strong> ${s.protocol} &nbsp;·&nbsp; <strong>Format:</strong> ${s.data_format}</div>
+            <div><strong>Endpoint:</strong> <code>${s.endpoint}</code></div>
+            <div style="margin-top:2px;"><strong>Variables:</strong> ${s.variables.join(', ')}</div>
+          </div>
+        </div>
+      `).join('');
+
+      showModal('National Meteorological & Disaster Infrastructure Endpoints', `
+        <p style="font-style:italic; color:var(--ink-light); margin-bottom:12px;">Live status of MoES, IMD, ISRO, and NDMA integration feeds:</p>
+        ${rows}
+      `);
+    } catch (err) {
+      alert('Failed to load government source registry: ' + err.message);
+    }
+  }
+
+  function showModal(title, html) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = html;
+    document.getElementById('gov-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('gov-modal').classList.remove('open');
+  }
+
   /* ── Helpers ──────────────────────────────────────────────── */
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-  window.vat = { flyTo, downscale, selectAnomaly };
+  window.vat = {
+    flyTo,
+    downscale,
+    selectAnomaly,
+    exportCap,
+    viewCap,
+    toggleImdLayer,
+    showMosdacModal,
+    showGovSourcesModal,
+    closeModal,
+  };
 
   /* ── Fallback Data ────────────────────────────────────────── */
   const FALLBACK = [

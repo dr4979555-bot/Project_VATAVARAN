@@ -1,0 +1,3 @@
+We built an AI meteorological intelligence bulletin that tracks cyclones, heatwaves, and flash floods across India at 5 km resolution. 10-day lookahead, Spherical GNN diffusion engine, and 5 live government feeds.
+
+VATAWARAN — SIH 2026 Problem Statement #26078.

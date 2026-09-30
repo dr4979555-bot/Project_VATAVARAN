@@ -3,11 +3,19 @@ fastapi>=0.110.0
 uvicorn[standard]>=0.30.0
 pydantic>=2.7.0
 
-# ── Production ML Dependencies (not required for prototype) ──
-# torch>=2.3.0
-# dgl>=2.0.0
-# xarray>=2024.03.0
-# numpy>=1.26.4
-# diffusers>=0.27.0
-# metpy>=1.6.0
-# cartopy>=0.22.0
+# ── Data Ingestion & Array Computing ──
+numpy>=1.26.0
+xarray>=2024.03.0
+netCDF4>=1.7.0
+h5netcdf>=1.4.0
+requests>=2.31.0
+
+# ── Production ML & Geospatial Dependencies ──
+torch>=2.3.0
+diffusers>=0.27.0
+metpy>=1.6.0
+cartopy>=0.22.0
+
+# ── Spherical Graph Neural Network (Optional GPU Cluster) ──
+# DGL: Install via pip install dgl -f https://data.dgl.ai/wheels/repo.html
+# Or PyTorch Geometric: pip install torch_geometric

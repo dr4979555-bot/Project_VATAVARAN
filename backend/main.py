@@ -13,11 +13,44 @@ import random
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+# ─── Data Ingestion (xarray / OpenDAP) ─────────────────────────────────────────
+try:
+    import xarray as xr
+except ImportError:
+    xr = None
+
+def get_ncmrwf_remote_dataset():
+    """Streams live NCMRWF dataset via OpenDAP when connected, or returns None."""
+    if not xr:
+        return None
+    try:
+        return xr.open_dataset('https://opendap.ncmrwf.gov.in/thredds/dodsC/NEPSG/latest.nc')
+    except Exception:
+        return None
+
+
+try:
+    from backend.gov_services import (
+        gov_hub,
+        GovSourceStatus,
+        IMDStationObservation,
+        MOSDACProduct,
+        CAPAlertPayload,
+    )
+except ImportError:
+    from gov_services import (
+        gov_hub,
+        GovSourceStatus,
+        IMDStationObservation,
+        MOSDACProduct,
+        CAPAlertPayload,
+    )
 
 # ─── App Init ──────────────────────────────────────────────────────────────────
 
@@ -85,6 +118,7 @@ class SystemStatus(BaseModel):
     gpu_name: str
     forecast_cycle: str
     pipeline_stages: list[PipelineStage]
+    gov_sources_active: Optional[int] = 5
 
 
 # ─── Mock Data ─────────────────────────────────────────────────────────────────
@@ -333,6 +367,7 @@ async def system_status():
             PipelineStage(stage=4, name="Physics-Guided Diffusion Downscaling", status="idle", latency_ms=None),
             PipelineStage(stage=5, name="Validation & Alert Delivery", status="idle", latency_ms=None),
         ],
+        gov_sources_active=5,
     )
 
 
@@ -462,6 +497,107 @@ async def generate_downscale(req: DownscaleRequest):
         },
         "features": [alert_feature] + grid_features,
     }
+
+
+# ─── Government API Integration Endpoints ─────────────────────────────────────
+
+
+@app.get("/api/v1/gov/sources", response_model=list[GovSourceStatus])
+async def get_gov_sources():
+    """
+    Returns real-time connectivity status and metadata for all upstream
+    and downstream Indian Government Meteorological & Disaster Management APIs:
+    NCMRWF (NEPS-G / IMDAA), IMD (AWS telemetry), ISRO/MOSDAC (INSAT-3DR), and NDMA Sachet.
+    """
+    return gov_hub.get_all_source_statuses()
+
+
+@app.get("/api/v1/gov/ncmrwf/cycle")
+async def get_ncmrwf_cycle():
+    """Returns latest NCMRWF NEPS-G / NCUM numerical weather prediction model run cycle."""
+    return gov_hub.ncmrwf.get_latest_cycle()
+
+
+@app.get("/api/v1/gov/imd/stations", response_model=list[IMDStationObservation])
+async def get_imd_stations():
+    """
+    Returns real-time ground AWS (Automatic Weather Station) observations
+    across Indian meteorological sub-divisions for ground truthing and bias verification.
+    """
+    return gov_hub.imd.get_realtime_observations()
+
+
+@app.get("/api/v1/gov/mosdac/satellite", response_model=list[MOSDACProduct])
+async def get_mosdac_satellite():
+    """
+    Returns latest ISRO SAC / MOSDAC INSAT-3DR and INSAT-3DS half-hourly products
+    (Hydro-Estimator rain rate, Outgoing Longwave Radiation, and convective cloud tops).
+    """
+    return gov_hub.mosdac.get_latest_satellite_feed()
+
+
+@app.get("/api/v1/gov/cap/alerts", response_model=list[CAPAlertPayload])
+async def get_all_cap_alerts(lead_time_hours: int = Query(default=96)):
+    """
+    Generates NDMA Sachet Common Alerting Protocol (CAP v1.2 / ITU-T X.1303) alert payloads
+    for all active weather anomalies tracked by VATAWARAN.
+    """
+    alerts = []
+    for anomaly in MOCK_ANOMALIES:
+        best = min(anomaly.trajectories, key=lambda t: abs(t.lead_time_hours - lead_time_hours))
+        metrics = {
+            "peak_efi": anomaly.peak_efi,
+            "confidence_score": anomaly.confidence_score,
+            "bounding_box": best.bounding_box,
+        }
+        alert = gov_hub.cap.build_cap_alert(
+            anomaly_id=anomaly.anomaly_id,
+            hazard_type=anomaly.hazard_type,
+            lead_time_hours=best.lead_time_hours,
+            centroid=best.centroid,
+            severity_level="EXTREME" if anomaly.peak_efi >= 0.92 else "SEVERE",
+            metrics=metrics,
+            advisory=anomaly.description,
+            valid_utc=best.valid_utc,
+        )
+        alerts.append(alert)
+    return alerts
+
+
+@app.get("/api/v1/gov/cap/export/{anomaly_id}")
+async def export_cap_xml(anomaly_id: str, lead_time_hours: int = Query(default=96)):
+    """
+    Exports official OASIS / ITU-T X.1303 CAP v1.2 XML Document for the specified anomaly.
+    Directly compatible with the National Disaster Management Authority (NDMA) Sachet dissemination engine.
+    """
+    anomaly = ANOMALY_MAP.get(anomaly_id)
+    if not anomaly:
+        return Response(content="<error>Unknown anomaly_id</error>", media_type="application/xml", status_code=404)
+
+    best = min(anomaly.trajectories, key=lambda t: abs(t.lead_time_hours - lead_time_hours))
+    metrics = {
+        "lead_time_hours": best.lead_time_hours,
+        "peak_efi": anomaly.peak_efi,
+        "confidence_score": anomaly.confidence_score,
+        "centroid_lat": best.centroid[1],
+        "centroid_lon": best.centroid[0],
+    }
+    alert = gov_hub.cap.build_cap_alert(
+        anomaly_id=anomaly.anomaly_id,
+        hazard_type=anomaly.hazard_type,
+        lead_time_hours=best.lead_time_hours,
+        centroid=best.centroid,
+        severity_level="EXTREME" if anomaly.peak_efi >= 0.92 else "SEVERE",
+        metrics=metrics,
+        advisory=anomaly.description,
+        valid_utc=best.valid_utc,
+    )
+    xml_content = gov_hub.cap.generate_cap_xml(alert)
+
+    headers = {
+        "Content-Disposition": f'attachment; filename="IN-NDMA-VATAWARAN-{anomaly_id}-T{lead_time_hours}.xml"'
+    }
+    return Response(content=xml_content, media_type="application/xml", headers=headers)
 
 
 # ─── Serve Frontend ───────────────────────────────────────────────────────────

@@ -22,9 +22,14 @@ ENV/
 .env.local
 .env.*.local
 
-# ── IDE / Editor ─────────────────────────────────────────────
+# ── IDE / Editor & Agent Caches ──────────────────────────────
 .vscode/
 .idea/
+.gemini/
+.agent/
+.agents/
+skills-lock.json
+*.hf-transaction*
 *.swp
 *.swo
 *~
