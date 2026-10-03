@@ -23,7 +23,10 @@ from pydantic import BaseModel, Field
 try:
     from app.ml.vatavaran_gnn_predictor import predict_gnn_temperature
 except ImportError:
-    from backend.app.ml.vatavaran_gnn_predictor import predict_gnn_temperature
+    try:
+        from backend.app.ml.vatavaran_gnn_predictor import predict_gnn_temperature
+    except ImportError:
+        predict_gnn_temperature = None
 
 
 # ─── Data Ingestion (xarray / OpenDAP) ─────────────────────────────────────────
@@ -636,12 +639,19 @@ if os.path.isdir(FRONTEND_DIR):
 try:
     from backend.app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
 except ImportError:
-    from app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
+    try:
+        from app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
+    except ImportError:
+        predict_extreme_event = None
+        predict_extreme_events = None
 
 try:
     from backend.app.ml.spatial_event_tracker import build_spatial_track
 except ImportError:
-    from app.ml.spatial_event_tracker import build_spatial_track
+    try:
+        from app.ml.spatial_event_tracker import build_spatial_track
+    except ImportError:
+        build_spatial_track = None
 
 try:
     from backend.app.ml.spatial_intensity import (
@@ -650,11 +660,16 @@ try:
         build_track_segments,
     )
 except ImportError:
-    from app.ml.spatial_intensity import (
-        build_snapshot_intensity_grid,
-        build_track_intensity_sequence,
-        build_track_segments,
-    )
+    try:
+        from app.ml.spatial_intensity import (
+            build_snapshot_intensity_grid,
+            build_track_intensity_sequence,
+            build_track_segments,
+        )
+    except ImportError:
+        build_snapshot_intensity_grid = None
+        build_track_intensity_sequence = None
+        build_track_segments = None
 
 
 class ExtremeEventPredictionRequest(BaseModel):
@@ -1036,6 +1051,11 @@ def gnn_temperature_prediction(
     request: GNNTemperatureRequest
 ):
     try:
+        if predict_gnn_temperature is None:
+            raise HTTPException(
+                status_code=503,
+                detail="GNN temperature model is not available in current environment."
+            )
         result = predict_gnn_temperature(
             request.location.strip()
         )
@@ -1046,6 +1066,8 @@ def gnn_temperature_prediction(
             "prediction": result,
         }
 
+    except HTTPException:
+        raise
     except ValueError as exc:
         raise HTTPException(
             status_code=400,

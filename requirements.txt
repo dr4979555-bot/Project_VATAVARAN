@@ -19,3 +19,7 @@ cartopy>=0.22.0
 # ── Spherical Graph Neural Network (Optional GPU Cluster) ──
 # DGL: Install via pip install dgl -f https://data.dgl.ai/wheels/repo.html
 # Or PyTorch Geometric: pip install torch_geometric
+
+# ── Testing & CI ──
+pytest>=8.0.0
+httpx>=0.27.0

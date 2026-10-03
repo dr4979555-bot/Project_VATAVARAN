@@ -11,7 +11,7 @@ Integrates Indian Government Meteorological & Disaster Management Endpoints:
 import os
 import math
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 from xml.etree import ElementTree as ET
 from pydantic import BaseModel, Field
@@ -280,7 +280,7 @@ class NDMACAPService:
         valid_utc: str,
     ) -> CAPAlertPayload:
         lon, lat = centroid[0], centroid[1]
-        sent_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S+05:30")
+        sent_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+05:30")
         identifier = f"IN-NDMA-VATAWARAN-{anomaly_id}-T{lead_time_hours}"
 
         # Assign hazard-specific title and instruction

@@ -10,8 +10,8 @@
 | Milestone | Status | Description |
 | :--- | :--- | :--- |
 | **Phase 0: Core Prototype & Gov Feeds** | **COMPLETED** ✅ | Full REST API (15 routes), broadsheet GIS UI, 5 Indian Gov APIs, ITU-T X.1303 CAP XML export, launch video (`brag.mp4`), pushed to GitHub. |
-| **Phase 1: Automated Test Suite & CI/CD** | **UP NEXT** 🏁 | Formal `pytest` test suite, GitHub Actions CI workflow. |
-| **Phase 2: Containerization (Docker)** | **READY TO START** ⏳ | `Dockerfile`, `docker-compose.yml`, local setup guide. |
+| **Phase 1: Automated Test Suite & CI/CD** | **COMPLETED** ✅ | 23/23 tests passing across `test_api.py`, `test_gov_services.py`, and `test_downscale.py`, plus `.github/workflows/ci.yml`. |
+| **Phase 2: Containerization (Docker)** | **UP NEXT** 🏁 | `Dockerfile`, `docker-compose.yml`, local setup guide. |
 | **Phase 3: NetCDF4 / GRIB2 Ingestion** | **PLANNED** 📋 | `xarray` parser for NCMRWF 12 km binary forecast state vectors. |
 | **Phase 4: SQLite Database Persistence** | **PLANNED** 📋 | Persist anomaly history, station observations, and dispatched CAP alerts. |
 | **Phase 5: Background Task Scheduler** | **PLANNED** 📋 | Autonomous 6-hour forecast cycle polling (00, 06, 12, 18 UTC). |
@@ -21,7 +21,7 @@
 
 ## 🏁 WHERE TO RESUME (Immediate Starting Point)
 
-When you return, start directly with **Phase 1 (Automated Test Suite)** and **Phase 2 (Containerization)**.
+When you return, start directly with **Phase 2 (Containerization & Deployment Orchestration)**.
 
 ### Quick Command to Resume Work:
 ```powershell
@@ -39,7 +39,7 @@ git status
 
 ## 🗺️ Detailed Phase Breakdown
 
-### Phase 1: Automated Pytest Suite & GitHub Actions CI (Recommended First)
+### Phase 1: Automated Pytest Suite & GitHub Actions CI (COMPLETED ✅)
 *Objective: Build an automated test suite so any changes are verified with one command (`pytest tests/`) and GitHub automatically tests every commit.*
 
 - **Tasks**:
