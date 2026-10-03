@@ -215,3 +215,71 @@ def test_frontend_serving():
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers.get("content-type", "")
+
+
+def test_security_headers_and_rate_limit():
+    """Verify security headers and rate-limit metadata are present on responses."""
+    response = client.get("/api/v1/system/status")
+    assert response.status_code == 200
+    assert response.headers.get("x-content-type-options") == "nosniff"
+    assert response.headers.get("x-frame-options") == "SAMEORIGIN"
+    assert response.headers.get("referrer-policy") == "strict-origin-when-cross-origin"
+    assert "strict-transport-security" in response.headers
+    assert "x-ratelimit-limit" in response.headers
+    assert "x-ratelimit-remaining" in response.headers
+
+
+def test_static_information_routes():
+    """Verify privacy, terms, favicon, robots, and sitemap endpoints return valid content."""
+    res_priv = client.get("/privacy")
+    assert res_priv.status_code == 200
+    assert "Privacy Policy" in res_priv.text
+
+    res_terms = client.get("/terms")
+    assert res_terms.status_code == 200
+    assert "Terms &amp; Conditions" in res_terms.text or "Terms & Conditions" in res_terms.text
+
+    res_fav = client.get("/favicon.ico")
+    assert res_fav.status_code == 200
+    assert "image/svg+xml" in res_fav.headers.get("content-type", "")
+
+    res_robots = client.get("/robots.txt")
+    assert res_robots.status_code == 200
+    assert "User-agent" in res_robots.text
+
+    res_sitemap = client.get("/sitemap.xml")
+    assert res_sitemap.status_code == 200
+    assert "<urlset" in res_sitemap.text
+
+
+def test_custom_404_routing():
+    """Verify 404 responses are formatted properly for API and browser navigation."""
+    res_api = client.get("/api/v1/non-existent-endpoint")
+    assert res_api.status_code == 404
+    assert res_api.json().get("status") == "error"
+
+    res_page = client.get("/invalid-page-for-browser")
+    assert res_page.status_code == 404
+    assert "Missing Atmospheric Dossier" in res_page.text
+
+
+def test_analytics_and_error_monitoring():
+    """Verify client-side analytics and error reporting endpoints."""
+    # Analytics post & get
+    post_an = client.post("/api/v1/system/analytics", json={"event_name": "test_ping", "details": {"source": "test"}})
+    assert post_an.status_code == 200
+    assert post_an.json()["status"] == "recorded"
+
+    get_an = client.get("/api/v1/system/analytics")
+    assert get_an.status_code == 200
+    assert get_an.json()["total_events"] > 0
+    assert "test_ping" in get_an.json()["event_summary"]
+
+    # Error logging post & get
+    post_err = client.post("/api/v1/system/client-error", json={"message": "Synthetic test error", "source": "test_api.py", "lineno": 42})
+    assert post_err.status_code == 200
+    assert post_err.json()["status"] == "logged"
+
+    get_err = client.get("/api/v1/system/errors")
+    assert get_err.status_code == 200
+    assert get_err.json()["error_count"] > 0

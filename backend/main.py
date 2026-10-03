@@ -11,14 +11,20 @@ import importlib
 import math
 import os
 import random
-from datetime import datetime, timedelta
+import time
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
 from fastapi import FastAPI, Query, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.requests import Request
 
 def _load_optional_attr(module_names: list[str], attr_name: str) -> Any:
     """Safely loads an attribute from candidate module paths if available."""
@@ -82,6 +88,71 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# ─── Telemetry & Rate Limiting Storage ─────────────────────────────────────────
+IP_REQUEST_LOG = defaultdict(list)
+RATE_LIMIT_MAX = 240  # requests per minute
+RATE_LIMIT_WINDOW = 60  # seconds
+
+ANALYTICS_EVENTS: list[dict[str, Any]] = []
+SYSTEM_ERRORS: list[dict[str, Any]] = []
+
+
+class SecurityAndRateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host if request.client else "127.0.0.1"
+        now = time.time()
+
+        # 1. Force HTTPS redirect in production if forwarded as http
+        proto = request.headers.get("x-forwarded-proto", "")
+        if proto == "http" and os.getenv("FORCE_HTTPS", "false").lower() == "true":
+            from fastapi.responses import RedirectResponse
+            https_url = str(request.url).replace("http://", "https://", 1)
+            return RedirectResponse(url=https_url, status_code=301)
+
+        # 2. Rate limiting check (protect heavy diffusion simulation & bot spam)
+        timestamps = IP_REQUEST_LOG[client_ip]
+        IP_REQUEST_LOG[client_ip] = [ts for ts in timestamps if now - ts < RATE_LIMIT_WINDOW]
+        if len(IP_REQUEST_LOG[client_ip]) >= RATE_LIMIT_MAX:
+            return Response(
+                content='{"status":"error","message":"Too many requests. Please wait."}',
+                status_code=429,
+                media_type="application/json",
+                headers={"Retry-After": "60"},
+            )
+        IP_REQUEST_LOG[client_ip].append(now)
+
+        # 3. Process Request with error tracking
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            SYSTEM_ERRORS.append({
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "path": str(request.url.path),
+                "method": request.method,
+                "error": str(exc),
+            })
+            if len(SYSTEM_ERRORS) > 100:
+                SYSTEM_ERRORS.pop(0)
+            raise exc
+
+        # 4. Security Headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(self), microphone=(), camera=()"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-RateLimit-Limit"] = str(RATE_LIMIT_MAX)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, RATE_LIMIT_MAX - len(IP_REQUEST_LOG[client_ip])))
+
+        # 5. Fast caching headers for static assets
+        if request.url.path.startswith("/frontend/") or request.url.path in ["/favicon.ico", "/robots.txt", "/sitemap.xml"]:
+            response.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
+
+        return response
+
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(SecurityAndRateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -627,7 +698,7 @@ async def export_cap_xml(anomaly_id: str, lead_time_hours: int = Query(default=9
     return Response(content=xml_content, media_type="application/xml", headers=headers)
 
 
-# ─── Serve Frontend ───────────────────────────────────────────────────────────
+# ─── Serve Frontend & Static Pages ────────────────────────────────────────────
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
 
@@ -638,6 +709,127 @@ async def serve_frontend():
     if os.path.exists(index_path):
         return FileResponse(index_path, media_type="text/html")
     return HTMLResponse("<h1>VATAWARAN API is running. Frontend not found.</h1>")
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def serve_privacy():
+    privacy_path = os.path.join(FRONTEND_DIR, "privacy.html")
+    if os.path.exists(privacy_path):
+        return FileResponse(privacy_path, media_type="text/html")
+    return HTMLResponse("<h1>Privacy Policy</h1>")
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def serve_terms():
+    terms_path = os.path.join(FRONTEND_DIR, "terms.html")
+    if os.path.exists(terms_path):
+        return FileResponse(terms_path, media_type="text/html")
+    return HTMLResponse("<h1>Terms & Conditions</h1>")
+
+
+@app.get("/favicon.ico")
+async def serve_favicon():
+    favicon_path = os.path.join(FRONTEND_DIR, "favicon.svg")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path, media_type="image/svg+xml")
+    raise HTTPException(status_code=404)
+
+
+@app.get("/robots.txt", response_class=Response)
+async def serve_robots():
+    robots_path = os.path.join(FRONTEND_DIR, "robots.txt")
+    if os.path.exists(robots_path):
+        return FileResponse(robots_path, media_type="text/plain")
+    return Response(content="User-agent: *\nAllow: /\n", media_type="text/plain")
+
+
+@app.get("/sitemap.xml", response_class=Response)
+async def serve_sitemap():
+    sitemap_path = os.path.join(FRONTEND_DIR, "sitemap.xml")
+    if os.path.exists(sitemap_path):
+        return FileResponse(sitemap_path, media_type="application/xml")
+    raise HTTPException(status_code=404)
+
+
+# ─── System Analytics & Error Monitoring API ──────────────────────────────────
+
+class AnalyticsEvent(BaseModel):
+    event_name: str
+    details: Optional[dict[str, Any]] = None
+
+
+@app.post("/api/v1/system/analytics")
+async def record_analytics(event: AnalyticsEvent):
+    """Anonymous client-side telemetry tracker adhering to DPDP 2023."""
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event_name": event.event_name,
+        "details": event.details or {},
+    }
+    ANALYTICS_EVENTS.append(record)
+    if len(ANALYTICS_EVENTS) > 500:
+        ANALYTICS_EVENTS.pop(0)
+    return {"status": "recorded", "event": event.event_name}
+
+
+@app.get("/api/v1/system/analytics")
+async def get_analytics():
+    """Retrieve aggregated non-PII operational events."""
+    counts: dict[str, int] = defaultdict(int)
+    for ev in ANALYTICS_EVENTS:
+        counts[ev["event_name"]] += 1
+    return {
+        "total_events": len(ANALYTICS_EVENTS),
+        "event_summary": dict(counts),
+        "recent_events": ANALYTICS_EVENTS[-20:],
+    }
+
+
+class ClientErrorReport(BaseModel):
+    message: str
+    source: Optional[str] = None
+    lineno: Optional[int] = None
+    colno: Optional[int] = None
+
+
+@app.post("/api/v1/system/client-error")
+async def record_client_error(report: ClientErrorReport):
+    """Log client-side unhandled errors for operational monitoring."""
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "type": "client_error",
+        "message": report.message,
+        "source": report.source,
+        "lineno": report.lineno,
+    }
+    SYSTEM_ERRORS.append(record)
+    if len(SYSTEM_ERRORS) > 100:
+        SYSTEM_ERRORS.pop(0)
+    return {"status": "logged"}
+
+
+@app.get("/api/v1/system/errors")
+async def get_system_errors():
+    """Returns recent system and client error logs for monitoring."""
+    return {
+        "error_count": len(SYSTEM_ERRORS),
+        "errors": SYSTEM_ERRORS[-25:],
+    }
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        if request.url.path.startswith("/api/"):
+            return Response(
+                content='{"status":"error","message":"Endpoint not found"}',
+                status_code=404,
+                media_type="application/json",
+            )
+        path_404 = os.path.join(FRONTEND_DIR, "404.html")
+        if os.path.exists(path_404):
+            return FileResponse(path_404, status_code=404, media_type="text/html")
+    return Response(content=str(exc.detail), status_code=exc.status_code)
 
 
 # Mount frontend static assets (CSS, JS, images if any)

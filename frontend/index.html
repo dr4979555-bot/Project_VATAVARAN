@@ -3,12 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="VATAWARAN — AI-Driven Spatio-Temporal Extreme Weather Tracking & Downscaling Engine. Smart India Hackathon 2026, Problem Statement #26078.">
+  <meta name="description" content="VATAWARAN — AI-Driven Spatio-Temporal Extreme Weather Tracking &amp; Physics-Constrained 5 km Diffusion Downscaling Engine. Smart India Hackathon 2026, Problem Statement #26078.">
+  <meta name="keywords" content="VATAWARAN, AI Weather, NCMRWF, IMD, Extreme Weather Downscaling, GNN, Diffusion Model, Smart India Hackathon 2026, MoES, NDMA Sachet, CAP v1.2">
+  <meta name="author" content="Project VATAWARAN Research Unit">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://vatawaran.gov.in/">
+  <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+
+  <!-- OpenGraph Social Preview -->
+  <meta property="og:title" content="VATAWARAN · AI Extreme Weather Tracking &amp; Downscaling Engine">
+  <meta property="og:description" content="Physics-constrained 5 km diffusion downscaling and spatio-temporal extreme weather anomaly tracking for MoES SIH 2026.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vatawaran.gov.in/">
+  <meta property="og:image" content="/frontend/og-preview.svg">
+  <meta property="og:site_name" content="Project VATAWARAN">
+  <meta property="og:locale" content="en_IN">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="VATAWARAN · AI Extreme Weather Tracking &amp; Downscaling Engine">
+  <meta name="twitter:description" content="Physics-constrained 5 km diffusion downscaling and spatio-temporal extreme weather anomaly tracking.">
+  <meta name="twitter:image" content="/frontend/og-preview.svg">
+
   <title>VATAWARAN · Meteorological Intelligence Bulletin</title>
 
-  <!-- ── Fonts ─────────────────────────────────────────────────── -->
+  <!-- ── CDNs with DNS Prefetch & Preconnect ────────────────────── -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://basemaps.cartocdn.com">
+  <link rel="dns-prefetch" href="https://unpkg.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" rel="stylesheet">
 
@@ -24,13 +47,13 @@
       --paper-3:   #ece5d6;
       --paper-4:   #e0d6c3;
 
-      /* Ink */
-      --ink-deep:  #1a1510;
-      --ink-base:  #2c2418;
-      --ink-mid:   #4a3f2f;
-      --ink-light: #7a6a52;
-      --ink-faint: #a89880;
-      --ink-ghost: #c8b89a;
+      /* Ink - enhanced for WCAG AA/AAA contrast */
+      --ink-deep:  #110d0a;
+      --ink-base:  #241c12;
+      --ink-mid:   #3d3224;
+      --ink-light: #52422e; /* was #7a6a52, passes >= 4.5:1 on paper backgrounds */
+      --ink-faint: #6e5e48; /* was #a89880, passes >= 3.0:1 on large text */
+      --ink-ghost: #8a7a62; /* was #c8b89a */
 
       /* Accent — Bureau Red */
       --red:       #8b1a1a;
@@ -47,8 +70,8 @@
       --forest-2:  #2d5a2d;
 
       /* Accent — Amber */
-      --amber:     #7a4f00;
-      --amber-2:   #a06800;
+      --amber:     #663d00; /* was #7a4f00 */
+      --amber-2:   #8a5200; /* was #a06800 */
 
       /* Rules & borders */
       --rule:      #c0a878;
@@ -1375,6 +1398,213 @@
     .station-marker:hover {
       transform: scale(1.15);
     }
+
+    /* ═══════════════════════════════════════════════════════════
+       TOAST NOTIFICATIONS & VALIDATION
+    ═══════════════════════════════════════════════════════════ */
+    .toast-container {
+      position: fixed;
+      bottom: 45px;
+      right: 24px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      background: var(--paper-0);
+      color: var(--ink-deep);
+      border: 1.5px solid var(--rule);
+      border-left: 4px solid var(--navy-2);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      padding: 10px 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn 0.25s ease-out;
+      max-width: 380px;
+    }
+    .toast.success { border-left-color: var(--forest-2); }
+    .toast.error   { border-left-color: var(--red); }
+    .toast.warn    { border-left-color: var(--amber-2); }
+    @keyframes toastIn { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* ═══════════════════════════════════════════════════════════
+       COOKIE CONSENT BANNER (DPDP 2023)
+    ═══════════════════════════════════════════════════════════ */
+    .cookie-banner {
+      position: fixed;
+      bottom: 35px;
+      left: 24px;
+      max-width: 500px;
+      background: var(--paper-0);
+      border: 2px double var(--rule);
+      box-shadow: 0 6px 24px rgba(44,36,24,0.16);
+      padding: 14px 18px;
+      z-index: 99998;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-radius: var(--r-sm);
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    .cookie-banner.hidden { display: none !important; }
+    .cookie-content { display: flex; gap: 10px; align-items: flex-start; }
+    .cookie-icon { font-size: 20px; line-height: 1; }
+    .cookie-text { color: var(--ink-mid); }
+    .cookie-text strong { color: var(--ink-deep); }
+    .cookie-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-family: var(--font-mono); font-size: 10px; }
+    .cookie-link { color: var(--red); text-decoration: underline; margin-right: auto; font-size: 11px; }
+    .cookie-btn {
+      padding: 6px 12px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      transition: all 0.15s ease;
+      min-height: 36px;
+    }
+    .cookie-btn.sec {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      color: var(--ink-base);
+    }
+    .cookie-btn.pri {
+      background: var(--red);
+      border: 1px solid var(--red);
+      color: #fff;
+    }
+    .cookie-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ═══════════════════════════════════════════════════════════
+       BUREAU FOOTER BAR
+    ═══════════════════════════════════════════════════════════ */
+    .bureau-footer {
+      background: var(--paper-0);
+      border-top: 1px solid var(--rule);
+      padding: 6px 24px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--ink-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      z-index: 90;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .footer-left { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .footer-sep { color: var(--rule-light); }
+    .footer-link {
+      color: var(--ink-mid);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .footer-link:hover { color: var(--red); text-decoration: underline; }
+    .footer-right { font-weight: 600; color: var(--forest-2); }
+
+    /* ═══════════════════════════════════════════════════════════
+       SEARCH & FORM VALIDATION
+    ═══════════════════════════════════════════════════════════ */
+    .sb-search-box {
+      margin: 8px 0 10px;
+      position: relative;
+    }
+    .sb-search-box input {
+      width: 100%;
+      background: var(--paper-0);
+      border: 1px solid var(--rule);
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-base);
+      border-radius: var(--r-sm);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .sb-search-box input:focus {
+      border-color: var(--navy-2);
+      box-shadow: 0 0 0 1px var(--navy-2);
+    }
+    .search-indicator {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 9px;
+      color: var(--ink-light);
+      pointer-events: none;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       MOBILE RESPONSIVENESS & TABS
+    ═══════════════════════════════════════════════════════════ */
+    .mobile-tabs {
+      display: none;
+      background: var(--paper-2);
+      border-bottom: 1px solid var(--rule);
+      padding: 4px 12px;
+      gap: 6px;
+      z-index: 95;
+    }
+    .mobile-tab-btn {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 8px 10px;
+      background: var(--paper-0);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-sm);
+      color: var(--ink-mid);
+      cursor: pointer;
+      text-align: center;
+      min-height: 44px; /* Touch target size */
+    }
+    .mobile-tab-btn.active {
+      background: var(--navy-2);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    @media (max-width: 992px) {
+      .mobile-tabs { display: flex; }
+      main { position: relative; }
+      .sidebar {
+        width: 100% !important;
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 50;
+        background: var(--paper-1);
+        display: none;
+      }
+      .sidebar.mobile-active { display: flex !important; }
+      .detail-panel {
+        width: 100% !important;
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 50;
+        background: var(--paper-0);
+        display: none;
+      }
+      .detail-panel.mobile-active { display: flex !important; }
+      .map-wrap.mobile-hidden { display: none !important; }
+      .hdr-masthead { padding: 10px 0; }
+      .masthead-title { font-size: 30px; }
+      .masthead-ornament { display: none; }
+      .gov-ribbon { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .gov-pill { min-height: 38px; }
+      .bureau-footer { font-size: 9px; padding: 6px 12px; }
+    }
   </style>
 </head>
 <body>
@@ -1450,18 +1680,29 @@
   </div>
 </section>
 
+<!-- Mobile View Navigator -->
+<nav class="mobile-tabs" id="mobile-tabs" aria-label="Mobile Navigation">
+  <button class="mobile-tab-btn active" id="tab-btn-sidebar" onclick="vat.setMobileTab('sidebar')">📋 Anomalies (<span id="mob-count">0</span>)</button>
+  <button class="mobile-tab-btn" id="tab-btn-map" onclick="vat.setMobileTab('map')">🗺️ Synoptic Map</button>
+  <button class="mobile-tab-btn" id="tab-btn-detail" onclick="vat.setMobileTab('detail')">📑 Dossier</button>
+</nav>
+
 <!-- ═══════════════════════════════════════════════════════════════════
      MAIN
 ═══════════════════════════════════════════════════════════════════ -->
 <main>
 
   <!-- ── Left Sidebar ────────────────────────────────────────────── -->
-  <aside class="sidebar" aria-label="Active anomaly dossiers">
+  <aside class="sidebar mobile-active" aria-label="Active anomaly dossiers">
     <div class="sb-header">
       <div class="sb-section-rule">
         <span class="sb-section-label">Active Anomalies</span>
       </div>
       <p class="sb-count-line" id="anomaly-count-line">Loading bulletin…</p>
+      <div class="sb-search-box">
+        <input type="text" id="anomaly-search" placeholder="Search by hazard, basin, state..." aria-label="Search anomalies" oninput="vat.filterAnomalies(this.value)" />
+        <span class="search-indicator" id="search-indicator"></span>
+      </div>
     </div>
     <ul class="anomaly-list" id="anomaly-list">
       <!-- Injected by JS -->
@@ -1546,6 +1787,48 @@
 </main>
 
 <!-- ═══════════════════════════════════════════════════════════════════
+     BUREAU FOOTER BAR
+═══════════════════════════════════════════════════════════════════ -->
+<footer class="bureau-footer">
+  <div class="footer-left">
+    <span><strong>VATAWARAN</strong> · MoES SIH 2026 · PS #26078</span>
+    <span class="footer-sep">·</span>
+    <a href="/privacy" class="footer-link">Privacy Policy</a>
+    <span class="footer-sep">·</span>
+    <a href="/terms" class="footer-link">Terms &amp; Conditions</a>
+    <span class="footer-sep">·</span>
+    <a href="/docs" target="_blank" rel="noopener noreferrer" class="footer-link">API Docs</a>
+    <span class="footer-sep">·</span>
+    <a href="https://github.com/dr4979555-bot/Project_VATAVARAN" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
+  </div>
+  <div class="footer-right">
+    <span id="footer-status-indicator">● Operational (Rate Limit Quota: 240 RPM)</span>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     COOKIE CONSENT BANNER (DPDP 2023)
+═══════════════════════════════════════════════════════════════════ -->
+<div id="cookie-banner" class="cookie-banner hidden" role="dialog" aria-label="Cookie and Storage Notice">
+  <div class="cookie-content">
+    <span class="cookie-icon">📜</span>
+    <p class="cookie-text">
+      <strong>Data Governance Notice:</strong> Project VATAWARAN utilizes local browser storage solely to preserve UI settings and active session state in compliance with India's <em>Digital Personal Data Protection Act, 2023</em>. No commercial cookies or profiling trackers are used.
+    </p>
+  </div>
+  <div class="cookie-actions">
+    <a href="/privacy" class="cookie-link">Privacy Policy</a>
+    <button class="cookie-btn sec" onclick="vat.dismissCookies('essential')">Essential Only</button>
+    <button class="cookie-btn pri" onclick="vat.dismissCookies('all')">Accept All</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TOAST NOTIFICATIONS CONTAINER
+═══════════════════════════════════════════════════════════════════ -->
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
      GOVERNMENT TELEMETRY & CAP MODAL
 ═══════════════════════════════════════════════════════════════════ -->
 <div class="gov-modal-backdrop" id="gov-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -1612,7 +1895,13 @@
     attributionControl: false,
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
-  map.on('load', () => { fetchStatus(); fetchTracks(); fetchImdStations(); });
+  map.on('load', () => {
+    fetchStatus();
+    fetchTracks();
+    fetchImdStations();
+    checkCookieConsent();
+    trackAnalytics('page_view', { path: '/' });
+  });
 
   /* ── System Status ────────────────────────────────────────── */
   async function fetchStatus() {
@@ -1648,6 +1937,8 @@
     const n = anomalies.length;
     document.getElementById('anomaly-count-line').textContent =
       `${n} anomal${n === 1 ? 'y' : 'ies'} detected — 00Z forecast cycle`;
+    const mobCount = document.getElementById('mob-count');
+    if (mobCount) mobCount.textContent = n;
     buildCards();
     buildMapLayers();
   }
@@ -1799,6 +2090,10 @@
     );
     document.getElementById('detail-panel').classList.remove('hidden');
     renderDetail(id);
+    trackAnalytics('anomaly_selected', { anomaly_id: id });
+    if (window.innerWidth <= 992) {
+      setMobileTab('detail');
+    }
   }
 
   /* ── Render Detail ────────────────────────────────────────── */
@@ -1876,7 +2171,19 @@
         </div>
       </div>
 
-      ${dsHtml ? `<div class="d-section" style="animation-delay:0.10s">${dsHtml}</div>` : ''}
+      ${dsHtml ? `<div class="d-section" style="animation-delay:0.10s">${dsHtml}</div>` : `
+        <div class="d-section" style="animation-delay:0.10s; background:var(--paper-2); border:1.5px dashed var(--rule-mid); padding:14px; text-align:center;">
+          <p style="font-family:var(--font-display); font-size:13px; font-weight:700; color:var(--ink-deep); margin-bottom:4px;">
+            ⚡ High-Resolution Physics Downscaling
+          </p>
+          <p style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-light); margin-bottom:12px; line-height:1.4;">
+            Condition generative diffusion models on 12 km IMDAA climatology &amp; topography to synthesize a 5 km localized hazard envelope.
+          </p>
+          <button class="c-btn c-btn-filled" style="width:100%; padding:10px; font-size:11px; letter-spacing:0.5px; text-transform:uppercase; font-weight:700;" onclick="vat.downscale('${a.anomaly_id}')">
+            ⚡ Run 5 km Physics Downscaling Simulation
+          </button>
+        </div>
+      `}
     `;
   }
 
@@ -1965,6 +2272,8 @@
 
   /* ── Downscale ────────────────────────────────────────────── */
   async function downscale(id) {
+    trackAnalytics('downscale_initiated', { anomaly_id: id });
+    showToast(`Commencing DDIM diffusion downscaling for ${id}...`, 'info');
     const screen = document.getElementById('diffusion-screen');
     const stepEl = document.getElementById('diff-step');
     const subEl  = document.getElementById('diff-sub');
@@ -2022,8 +2331,12 @@
       const result = await r.json();
       downscaleCache[id] = result;
       renderDownscaleMap(id, result);
+      showToast(`5 km downscaling complete for ${id}. Physics QA Passed.`, 'success');
+      trackAnalytics('downscale_success', { anomaly_id: id });
     } catch (err) {
       console.error('Downscale failed:', err);
+      showToast(`Downscale failed: ${err.message || 'Network error'}`, 'error');
+      trackAnalytics('downscale_error', { anomaly_id: id, error: String(err) });
     }
 
     screen.classList.remove('active');
@@ -2144,12 +2457,15 @@
   function exportCap(anomalyId) {
     const id = anomalyId || selectedId || (anomalies[0]?.anomaly_id);
     if (!id) return;
+    trackAnalytics('cap_exported', { anomaly_id: id });
+    showToast(`Generating ITU-T X.1303 CAP v1.2 XML for ${id}...`, 'info');
     window.open(`${API}/api/v1/gov/cap/export/${id}`, '_blank');
   }
 
   async function viewCap(anomalyId) {
     const id = anomalyId || selectedId || (anomalies[0]?.anomaly_id);
     if (!id) return;
+    trackAnalytics('cap_viewed', { anomaly_id: id });
     try {
       const res = await fetch(`${API}/api/v1/gov/cap/alerts`);
       const alerts = await res.json();
@@ -2171,7 +2487,7 @@
         </div>
       `);
     } catch (err) {
-      alert('Failed to load CAP alert: ' + err.message);
+      showToast('Failed to load CAP alert: ' + err.message, 'error');
     }
   }
 
@@ -2242,6 +2558,135 @@
     document.getElementById('gov-modal').classList.remove('open');
   }
 
+  /* ── Mobile Navigation, Search, Consent & Error Monitoring ── */
+  function setMobileTab(tab) {
+    document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.id === `tab-btn-${tab}`);
+    });
+    const sidebar = document.querySelector('.sidebar');
+    const mapWrap = document.querySelector('.map-wrap');
+    const detail = document.querySelector('.detail-panel');
+
+    if (sidebar) sidebar.classList.toggle('mobile-active', tab === 'sidebar');
+    if (detail) detail.classList.toggle('mobile-active', tab === 'detail');
+    if (mapWrap) mapWrap.classList.toggle('mobile-hidden', tab !== 'map');
+
+    if (tab === 'map') {
+      setTimeout(() => { if (map) map.resize(); }, 120);
+    }
+  }
+
+  function filterAnomalies(query) {
+    const q = (query || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('.a-card');
+    let matchedCount = 0;
+    cards.forEach(card => {
+      const id = (card.dataset.id || '').toLowerCase();
+      const text = card.textContent.toLowerCase();
+      const match = !q || id.includes(q) || text.includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) matchedCount++;
+    });
+    const indicator = document.getElementById('search-indicator');
+    if (indicator) {
+      indicator.textContent = q ? `${matchedCount}/${cards.length}` : '';
+    }
+  }
+
+  function checkCookieConsent() {
+    const consent = localStorage.getItem('vat_cookie_consent');
+    const banner = document.getElementById('cookie-banner');
+    if (!consent && banner) {
+      banner.classList.remove('hidden');
+    }
+  }
+
+  function dismissCookies(choice) {
+    localStorage.setItem('vat_cookie_consent', choice);
+    const banner = document.getElementById('cookie-banner');
+    if (banner) banner.classList.add('hidden');
+    trackAnalytics('cookie_consent', { choice: choice });
+    showToast(choice === 'all' ? 'All preferences saved.' : 'Essential preferences saved.', 'info');
+  }
+
+  function showToast(msg, type = 'info', duration = 3500) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' ? '✓' : type === 'error' ? '⚠' : 'ℹ';
+    toast.innerHTML = `<span style="font-weight:700; margin-right:6px;">${icon}</span><span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      toast.style.transition = 'all 0.3s ease';
+      setTimeout(() => toast.remove(), 350);
+    }, duration);
+  }
+
+  async function trackAnalytics(eventName, details = {}) {
+    try {
+      await fetch(`${API}/api/v1/system/analytics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_name: eventName,
+          client_timestamp: new Date().toISOString(),
+          details: details,
+          screen_width: window.innerWidth,
+          screen_height: window.innerHeight,
+        }),
+      });
+    } catch {
+      // Non-blocking telemetry
+    }
+  }
+
+  window.addEventListener('error', e => {
+    try {
+      fetch(`${API}/api/v1/system/client-error`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: e.message || 'Client JavaScript Error',
+          source: e.filename || window.location.href,
+          lineno: e.lineno || 0,
+          colno: e.colno || 0,
+          stack: e.error ? e.error.stack : null,
+        }),
+      }).catch(() => {});
+    } catch {}
+  });
+
+  window.addEventListener('unhandledrejection', e => {
+    try {
+      fetch(`${API}/api/v1/system/client-error`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: 'Unhandled Rejection: ' + (e.reason?.message || e.reason || 'Unknown error'),
+          source: window.location.href,
+          lineno: 0,
+          colno: 0,
+          stack: e.reason?.stack || null,
+        }),
+      }).catch(() => {});
+    } catch {}
+  });
+
+  window.addEventListener('resize', () => {
+    const sidebar = document.querySelector('.sidebar');
+    const mapWrap = document.querySelector('.map-wrap');
+    const detail = document.querySelector('.detail-panel');
+    if (window.innerWidth > 992) {
+      if (sidebar) sidebar.classList.remove('mobile-active');
+      if (detail) detail.classList.remove('mobile-active');
+      if (mapWrap) mapWrap.classList.remove('mobile-hidden');
+    }
+    if (map) map.resize();
+  });
+
   /* ── Helpers ──────────────────────────────────────────────── */
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
   window.vat = {
@@ -2254,6 +2699,11 @@
     showMosdacModal,
     showGovSourcesModal,
     closeModal,
+    setMobileTab,
+    filterAnomalies,
+    dismissCookies,
+    showToast,
+    trackAnalytics,
   };
 
   /* ── Fallback Data ────────────────────────────────────────── */

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdfbf7" />
+      <stop offset="50%" stop-color="#faf6ee" />
+      <stop offset="100%" stop-color="#ede5d4" />
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#d5c8b0" stroke-width="0.7" opacity="0.4"/>
+    </pattern>
+  </defs>
+
+  <!-- Background Paper -->
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#grid)" />
+
+  <!-- Outer Double Border -->
+  <rect x="24" y="24" width="1152" height="582" fill="none" stroke="#8b1a1a" stroke-width="4" />
+  <rect x="32" y="32" width="1136" height="566" fill="none" stroke="#a08858" stroke-width="1.5" />
+
+  <!-- Top Dateline Banner -->
+  <rect x="36" y="36" width="1128" height="42" fill="#f4efe4" stroke="#c0a878" stroke-width="1" />
+  <text x="60" y="62" font-family="Georgia, serif" font-size="14" font-weight="700" fill="#8b1a1a" letter-spacing="2">SMART INDIA HACKATHON 2026 · PROBLEM STATEMENT #26078</text>
+  <text x="1130" y="62" text-anchor="end" font-family="'Courier New', monospace" font-size="13" font-weight="600" fill="#4a3f2f">MINISTRY OF EARTH SCIENCES (MoES)</text>
+
+  <!-- Title & Subtitle -->
+  <text x="60" y="160" font-family="'Courier New', monospace" font-size="18" font-weight="700" fill="#a06800" letter-spacing="3">AI-DRIVEN METEOROLOGICAL INTELLIGENCE BULLETIN</text>
+  <text x="60" y="250" font-family="'Times New Roman', serif" font-size="82" font-weight="900" fill="#1a1510" letter-spacing="4">PROJECT VATAWARAN</text>
+  <line x1="60" y1="275" x2="1140" y2="275" stroke="#8b1a1a" stroke-width="3" />
+  <line x1="60" y1="281" x2="1140" y2="281" stroke="#a08858" stroke-width="1" />
+
+  <text x="60" y="325" font-family="Georgia, serif" font-size="28" font-style="italic" fill="#2c2418">
+    Spatio-Temporal Extreme Weather Tracking &amp; Physics-Constrained 5 km Diffusion Downscaling
+  </text>
+
+  <!-- Badges Grid -->
+  <g transform="translate(60, 370)">
+    <!-- Badge 1 -->
+    <rect x="0" y="0" width="310" height="90" rx="6" fill="#fefcf7" stroke="#c0a878" stroke-width="1.5" />
+    <text x="20" y="35" font-family="'Courier New', monospace" font-size="13" font-weight="700" fill="#8b1a1a">STAGE 1: SPHERICAL GNN</text>
+    <text x="20" y="65" font-family="Georgia, serif" font-size="15" fill="#4a3f2f">12 km Global Mesh Trajectory Tracking</text>
+
+    <!-- Badge 2 -->
+    <rect x="340" y="0" width="320" height="90" rx="6" fill="#fefcf7" stroke="#c0a878" stroke-width="1.5" />
+    <text x="360" y="35" font-family="'Courier New', monospace" font-size="13" font-weight="700" fill="#1a2744">STAGE 2: DIFFUSION U-NET</text>
+    <text x="360" y="65" font-family="Georgia, serif" font-size="15" fill="#4a3f2f">5 km Mass-Conserving Downscaling</text>
+
+    <!-- Badge 3 -->
+    <rect x="690" y="0" width="390" height="90" rx="6" fill="#fefcf7" stroke="#c0a878" stroke-width="1.5" />
+    <text x="710" y="35" font-family="'Courier New', monospace" font-size="13" font-weight="700" fill="#2d5a2d">DISASTER ALERT INTEGRATION</text>
+    <text x="710" y="65" font-family="Georgia, serif" font-size="15" fill="#4a3f2f">NDMA Sachet CAP v1.2 / ITU-T X.1303</text>
+  </g>
+
+  <!-- Bottom Gov Partner Footer -->
+  <g transform="translate(60, 520)">
+    <text x="0" y="35" font-family="'Courier New', monospace" font-size="14" font-weight="700" fill="#7a6a52" letter-spacing="1.5">INTEGRATED NATIONAL PROVIDERS:</text>
+    <text x="320" y="35" font-family="Georgia, serif" font-size="16" font-weight="700" fill="#1a1510">NCMRWF NEPS-G &bull; IMD Ground AWS &bull; ISRO MOSDAC INSAT-3DR &bull; NDMA Sachet</text>
+  </g>
+</svg>
