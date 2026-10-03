@@ -383,4 +383,82 @@ def test_ingest_ecmwf_grib_aliases(tmp_path):
     state, meta = ing.ingest_ncmrwf_cycle(str(test_file))
     assert state.shape == (9, 3, 3)
     assert np.isclose(meta["raw_stats"]["U850"]["mean"], 3.5, atol=1e-2)
-    assert np.isclose(meta["raw_stats"]["V850"]["mean"], 1.2, atol=1e-2)
+    assert np.isclose(meta["raw_stats"]["V850"]["mean"], 1.2, atol=1e-2)
+
+
+def test_ingest_declared_units_beat_value_heuristic(tmp_path):
+    """
+    Declared canonical units must NEVER be overridden by the value-based
+    heuristics inside `_conform_channel_units`.
+
+    Regression: a TP field legitimately declared in millimetres but with light
+    rainfall (mean < 0.05) used to be silently multiplied by 1000 because its
+    values "looked like" metres, corrupting the state vector into a false
+    precipitation anomaly.
+    """
+    import warnings
+
+    import netCDF4 as nc4
+
+    test_file = tmp_path / "declared_units_win.nc"
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        with nc4.Dataset(str(test_file), "w", format="NETCDF4") as ds:
+            ds.createDimension("time", 1)
+            ds.createDimension("lat", 3)
+            ds.createDimension("lon", 3)
+            lat = ds.createVariable("lat", "f4", ("lat",))
+            lat[:] = [10.0, 11.0, 12.0]
+            lon = ds.createVariable("lon", "f4", ("lon",))
+            lon[:] = [70.0, 71.0, 72.0]
+
+            for channel in ing.CHANNELS:
+                v = ds.createVariable(channel, "f4", ("time", "lat", "lon"))
+                if channel == "TP":
+                    v.units = "mm"
+                    v[:] = np.full((1, 3, 3), 0.02, dtype="f4")  # light but canonical mm
+                elif channel in ("T850", "T2M"):
+                    v.units = "K"
+                    v[:] = np.full((1, 3, 3), 285.0, dtype="f4")
+                elif channel == "Z500":
+                    v.units = "gpm"
+                    v[:] = np.full((1, 3, 3), 5830.0, dtype="f4")
+                else:
+                    v[:] = np.full((1, 3, 3), 1.0, dtype="f4")
+
+    _, meta = ing.ingest_ncmrwf_cycle(str(test_file))
+    assert meta["raw_stats"]["TP"]["mean"] == pytest.approx(0.02, abs=1e-4)  # NOT 20.0
+    assert 284 <= meta["raw_stats"]["T2M"]["mean"] <= 286  # NOT 558.15 (285 K kept as K)
+    assert 5825 <= meta["raw_stats"]["Z500"]["mean"] <= 5835  # NOT ~594 (5830 gpm kept)
+
+
+def test_ingest_masked_coordinate_metadata(tmp_path):
+    """Masked coordinate cells must not leak fill values into grid metadata."""
+    import warnings
+
+    import netCDF4 as nc4
+
+    test_file = tmp_path / "masked_coord.nc"
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        with nc4.Dataset(str(test_file), "w", format="NETCDF4") as ds:
+            ds.createDimension("time", 1)
+            ds.createDimension("lat", 4)
+            ds.createDimension("lon", 4)
+            lat = ds.createVariable("lat", "f4", ("lat",), fill_value=-9999.0)
+            lat.units = "degrees_north"
+            lat[:] = np.ma.array([10.0, 15.0, 20.0, 25.0], mask=[False, False, True, False])
+            lon = ds.createVariable("lon", "f4", ("lon",))
+            lon[:] = np.linspace(70.0, 73.0, 4)
+            for channel in ing.CHANNELS:
+                v = ds.createVariable(channel, "f4", ("time", "lat", "lon"))
+                v[:] = np.full((1, 4, 4), 1.0, dtype="f4")
+
+    _, meta = ing.ingest_ncmrwf_cycle(str(test_file))
+    lat_meta = meta["grid"]["lat"]
+    # The masked cell must be excluded, not reported as a 9.97e36 fill value:
+    assert lat_meta["count"] == 3
+    assert 0.0 < lat_meta["min"] < 90.0
+    assert 0.0 < lat_meta["max"] < 90.0
+    # [10.0, 15.0, 25.0] diffs are [5.0, 10.0] -> mean step is 7.5:
+    assert lat_meta["step"] == pytest.approx(7.5, abs=1e-3)

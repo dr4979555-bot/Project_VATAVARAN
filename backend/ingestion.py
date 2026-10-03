@@ -406,6 +406,11 @@ def _conform_channel_units(channel: str, matrix: np.ndarray, da: Optional["xr.Da
       * Z500: Geopotential (m^2/s^2) -> Geopotential Height (gpm) via g0 = 9.80665 m/s^2
       * T850 / T2M: Celsius (°C) -> Kelvin (K) (+ 273.15)
       * TP: Accumulated precipitation meters (m) -> millimeters (mm) (* 1000)
+
+    Declared units always win. The value-based fallbacks below fire ONLY when
+    units are missing/unknown (``unit == ""``) so that a legitimate light field
+    already expressed in the canonical unit (e.g. 0.02 mm of rain) can never be
+    silently scaled by 1000 just because its values *look* like metres.
     """
     unit = str(getattr(da, "units", "") or "").lower().strip() if da is not None else ""
     finite = matrix[np.isfinite(matrix)]
@@ -414,21 +419,23 @@ def _conform_channel_units(channel: str, matrix: np.ndarray, da: Optional["xr.Da
 
     # Z500: Geopotential in m^2/s^2 (~57,000) -> gpm (~5,830)
     if channel == "Z500":
-        if any(tok in unit for tok in ("m**2", "m^2", "m2")) or mean_val > 20_000.0:
+        if any(tok in unit for tok in ("m**2", "m^2", "m2")):
+            return matrix / 9.80665
+        if not unit and mean_val > 20_000.0:
             return matrix / 9.80665
 
     # T850 / T2M: Celsius -> Kelvin
     if channel in ("T850", "T2M"):
-        if unit in ("c", "degc", "celsius", "degrees_c", "degree_c", "deg_c") or (
-            finite.size > 0 and max_val < 100.0 and mean_val < 60.0
-        ):
+        if unit in ("c", "degc", "celsius", "degrees_c", "degree_c", "deg_c"):
+            return matrix + 273.15
+        if not unit and finite.size > 0 and max_val < 100.0 and mean_val < 60.0:
             return matrix + 273.15
 
     # TP: meters -> mm
     if channel == "TP":
-        if unit in ("m", "meter", "metre", "meters", "metres") or (
-            finite.size > 0 and max_val < 0.5 and mean_val < 0.05
-        ):
+        if unit in ("m", "meter", "metre", "meters", "metres"):
+            return matrix * 1000.0
+        if not unit and finite.size > 0 and max_val < 0.5 and mean_val < 0.05:
             return matrix * 1000.0
 
     return matrix
@@ -499,6 +506,7 @@ def _coord_meta(ds: "xr.Dataset", name: str):
     lat_candidates = ("lat", "latitude", "LAT", "LATITUDE", "Latitude", "Lat")
     lon_candidates = ("lon", "longitude", "LON", "LONGITUDE", "Longitude", "Lon")
     candidates = lat_candidates if name == "lat" else lon_candidates if name == "lon" else (name,)
+    physical_bounds = (-90.0, 90.0) if name == "lat" else (-360.0, 360.0) if name == "lon" else None
     for candidate in candidates:
         if candidate not in ds.coords and candidate not in ds.variables:
             continue
@@ -507,14 +515,17 @@ def _coord_meta(ds: "xr.Dataset", name: str):
             raw_val = raw_val.filled(np.nan)
         values = np.asarray(raw_val, dtype=float).reshape(-1)
         finite = values[np.isfinite(values)]
+        if physical_bounds is not None:
+            low, high = physical_bounds
+            finite = finite[(finite >= low) & (finite <= high)]  # drop mask/fill artifacts
         if finite.size == 0:
             continue
         return {
             "units": str(getattr(ds[candidate], "units", "") or ""),
             "min": round(float(finite.min()), 6),
             "max": round(float(finite.max()), 6),
-            "step": round(float(np.diff(values).mean()), 6) if values.size > 1 else 0.0,
-            "count": int(values.size),
+            "step": round(float(np.diff(finite).mean()), 6) if finite.size > 1 else 0.0,
+            "count": int(finite.size),
         }
     return None
 
