@@ -247,6 +247,18 @@ def test_static_information_routes():
     assert res_robots.status_code == 200
     assert "User-agent" in res_robots.text
 
+    res_styles = client.get("/styles.css")
+    assert res_styles.status_code == 200
+    assert "text/css" in res_styles.headers.get("content-type", "")
+
+    res_js = client.get("/app.js")
+    assert res_js.status_code == 200
+    assert "javascript" in res_js.headers.get("content-type", "")
+
+    res_og = client.get("/og-preview.svg")
+    assert res_og.status_code == 200
+    assert "image/svg+xml" in res_og.headers.get("content-type", "")
+
     res_sitemap = client.get("/sitemap.xml")
     assert res_sitemap.status_code == 200
     assert "<urlset" in res_sitemap.text

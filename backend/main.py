@@ -727,6 +727,31 @@ async def serve_terms():
     return HTMLResponse("<h1>Terms & Conditions</h1>")
 
 
+@app.get("/styles.css")
+async def serve_styles():
+    styles_path = os.path.join(FRONTEND_DIR, "styles.css")
+    if os.path.exists(styles_path):
+        return FileResponse(styles_path, media_type="text/css")
+    raise HTTPException(status_code=404)
+
+
+@app.get("/app.js")
+async def serve_app_js():
+    app_js_path = os.path.join(FRONTEND_DIR, "app.js")
+    if os.path.exists(app_js_path):
+        return FileResponse(app_js_path, media_type="application/javascript")
+    raise HTTPException(status_code=404)
+
+
+@app.get("/og-preview.svg")
+@app.get("/frontend/og-preview.svg")
+async def serve_og_preview():
+    og_path = os.path.join(FRONTEND_DIR, "og-preview.svg")
+    if os.path.exists(og_path):
+        return FileResponse(og_path, media_type="image/svg+xml")
+    raise HTTPException(status_code=404)
+
+
 @app.get("/favicon.ico")
 async def serve_favicon():
     favicon_path = os.path.join(FRONTEND_DIR, "favicon.svg")
