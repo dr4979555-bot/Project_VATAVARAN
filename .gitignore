@@ -60,3 +60,12 @@ logs/
 # ── OS ───────────────────────────────────────────────────────
 .DS_Store
 desktop.ini
+
+# Large ML artifacts
+*.npz
+*.pt
+*.pth
+*.ckpt
+
+# Local backup files
+*.backup-*

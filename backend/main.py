@@ -13,11 +13,18 @@ import random
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import FastAPI, Query, Response
+from fastapi import FastAPI, Query, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+# ─── VATAVARAN GNN ─────────────────────────────────────────────────────────────
+try:
+    from app.ml.vatavaran_gnn_predictor import predict_gnn_temperature
+except ImportError:
+    from backend.app.ml.vatavaran_gnn_predictor import predict_gnn_temperature
+
 
 # ─── Data Ingestion (xarray / OpenDAP) ─────────────────────────────────────────
 try:
@@ -351,6 +358,14 @@ def _generate_downscale_grid(
 # ─── API Endpoints ─────────────────────────────────────────────────────────────
 
 
+
+# ─── GNN Temperature Prediction Request ───────────────────────────────────────
+class GNNTemperatureRequest(BaseModel):
+    location: str = Field(
+        ...,
+        min_length=2
+    )
+
 @app.get("/api/v1/system/status", response_model=SystemStatus)
 async def system_status():
     """Returns current pipeline health and stage indicators."""
@@ -616,3 +631,429 @@ async def serve_frontend():
 # Mount frontend static assets (CSS, JS, images if any)
 if os.path.isdir(FRONTEND_DIR):
     app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
+
+# ─── AI/ML Extreme Event Predictor ────────────────────────────────────────────
+try:
+    from backend.app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
+except ImportError:
+    from app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
+
+try:
+    from backend.app.ml.spatial_event_tracker import build_spatial_track
+except ImportError:
+    from app.ml.spatial_event_tracker import build_spatial_track
+
+try:
+    from backend.app.ml.spatial_intensity import (
+        build_snapshot_intensity_grid,
+        build_track_intensity_sequence,
+        build_track_segments,
+    )
+except ImportError:
+    from app.ml.spatial_intensity import (
+        build_snapshot_intensity_grid,
+        build_track_intensity_sequence,
+        build_track_segments,
+    )
+
+
+class ExtremeEventPredictionRequest(BaseModel):
+    location: str = Field(..., min_length=2, description="City/location name")
+
+
+class SpatialEventTrackRequest(BaseModel):
+    start_time: str = Field(
+        ...,
+        description="Historical replay start timestamp, e.g. 2022-07-14 10:00:00",
+    )
+    hours: int = Field(
+        5,
+        ge=1,
+        le=72,
+        description="Number of hourly snapshots to track",
+    )
+    event_type: str = Field(
+        "HEAVY_RAIN",
+        min_length=3,
+        description="Extreme event type to track",
+    )
+    minimum_probability: float = Field(
+        0.50,
+        ge=0.0,
+        le=1.0,
+        description="Minimum physics-adjusted probability",
+    )
+    max_speed_kmh: float = Field(
+        120.0,
+        gt=0.0,
+        description="Maximum allowed centroid movement speed",
+    )
+
+
+
+class SpatialEventIntensityRequest(BaseModel):
+    start_time: str = Field(..., description="Historical replay start timestamp, e.g. 2022-07-14 10:00:00")
+    hours: int = Field(5, ge=1, le=72, description="Number of hourly snapshots")
+    event_type: str = Field("HEAVY_RAIN", min_length=3, description="Extreme event type")
+    minimum_probability: float = Field(0.50, ge=0.0, le=1.0)
+    max_speed_kmh: float = Field(120.0, gt=0.0)
+    snapshot_index: int = Field(0, ge=0, le=71)
+    grid_size: int = Field(10, ge=2, le=100)
+
+
+
+class WeatherEventAnalysisRequest(BaseModel):
+    start_time: str = Field(
+        ...,
+        description="Historical replay start timestamp, e.g. 2022-07-14 10:00:00",
+    )
+    hours: int = Field(
+        5,
+        ge=1,
+        le=72,
+        description="Number of hourly snapshots to analyze",
+    )
+    event_type: str = Field(
+        "HEAVY_RAIN",
+        min_length=3,
+        description="Extreme event type to analyze",
+    )
+    minimum_probability: float = Field(
+        0.50,
+        ge=0.0,
+        le=1.0,
+        description="Minimum physics-adjusted event probability",
+    )
+    max_speed_kmh: float = Field(
+        120.0,
+        gt=0.0,
+        description="Maximum allowed centroid movement speed",
+    )
+    grid_size: int = Field(
+        10,
+        ge=2,
+        le=100,
+        description="Spatial interpolation grid size",
+    )
+
+
+@app.post("/api/v1/ml/weather-event-analysis")
+def weather_event_analysis_api(
+    request: WeatherEventAnalysisRequest,
+):
+    """
+    Run the complete historical extreme-weather analysis pipeline.
+
+    Pipeline:
+    ML event prediction
+    -> physics-informed validation
+    -> spatial event tracking
+    -> IDW spatial intensity fields
+    -> probability-weighted centroid movement
+    -> track segmentation
+
+    This is a historical replay prototype, not live telemetry.
+    """
+    try:
+        # ---------------------------------------------------------
+        # 1. Generate the spatial event track
+        # ---------------------------------------------------------
+        track = build_spatial_track(
+            start_time=request.start_time,
+            hours=request.hours,
+            event_type=request.event_type,
+            minimum_probability=request.minimum_probability,
+            max_speed_kmh=request.max_speed_kmh,
+        )
+
+        # ---------------------------------------------------------
+        # 2. Convert tracker snapshots into spatial fields
+        # ---------------------------------------------------------
+        intensity_sequence = build_track_intensity_sequence(
+            track=track,
+            grid_size=request.grid_size,
+        )
+
+        if intensity_sequence.get("status") != (
+            "spatial_intensity_sequence_generated"
+        ):
+            return {
+                "status": "error",
+                "message": (
+                    "Unable to generate spatial intensity sequence."
+                ),
+                "details": intensity_sequence,
+            }
+
+        # ---------------------------------------------------------
+        # 3. Segment continuous spatial tracks
+        # ---------------------------------------------------------
+        track_segments = build_track_segments(
+            sequence=intensity_sequence["snapshots"],
+            max_speed_kmh=request.max_speed_kmh,
+        )
+
+        # ---------------------------------------------------------
+        # 4. Return one unified analysis object
+        # ---------------------------------------------------------
+        return {
+            "status": "weather_event_analysis_generated",
+
+            "analysis_type": (
+                "Historical extreme-weather event analysis"
+            ),
+
+            "event_type": request.event_type.upper(),
+
+            "historical_replay": True,
+
+            "is_live": False,
+
+            "pipeline": [
+                "Random Forest extreme-event classification",
+                "Physics-informed probability adjustment",
+                "Spatial event tracking",
+                "Inverse Distance Weighting spatial interpolation",
+                "Probability-weighted centroid tracking",
+                "Movement-speed gating",
+                "Track segmentation",
+            ],
+
+            "configuration": {
+                "start_time": request.start_time,
+                "hours": request.hours,
+                "minimum_probability": request.minimum_probability,
+                "max_speed_kmh": request.max_speed_kmh,
+                "grid_size": request.grid_size,
+            },
+
+            "spatial_track": track,
+
+            "spatial_intensity": intensity_sequence,
+
+            "track_analysis": track_segments,
+
+            "summary": {
+                "snapshot_count": (
+                    intensity_sequence.get(
+                        "snapshot_count",
+                        0,
+                    )
+                ),
+                "track_segment_count": (
+                    track_segments.get(
+                        "segment_count",
+                        0,
+                    )
+                ),
+                "track_break_count": (
+                    track_segments.get(
+                        "track_break_count",
+                        0,
+                    )
+                ),
+            },
+
+            "scientific_status": {
+                "ml_model": (
+                    "Prototype supervised classifier "
+                    "trained on weak historical labels"
+                ),
+                "physics_layer": (
+                    "Physics-informed post-processing "
+                    "constraints"
+                ),
+                "spatial_method": (
+                    "Inverse Distance Weighting"
+                ),
+                "downscaling": (
+                    "Not true physical 12 km to 5 km "
+                    "downscaling yet"
+                ),
+                "live_data": (
+                    "Not live; historical replay"
+                ),
+            },
+        }
+
+    except ValueError as exc:
+        return {
+            "status": "error",
+            "message": str(exc),
+        }
+
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": (
+                f"Weather event analysis failed: {exc}"
+            ),
+        }
+
+
+@app.post("/api/v1/ml/spatial-intensity-grid")
+def spatial_event_intensity_api(request: SpatialEventIntensityRequest):
+    """
+    Generate an interpolated spatial event-intensity grid
+    from a historical spatial-event tracker snapshot.
+
+    This is an explainable IDW interpolation layer,
+    not physical atmospheric downscaling.
+    """
+    try:
+        track = build_spatial_track(
+            start_time=request.start_time,
+            hours=request.hours,
+            event_type=request.event_type,
+            minimum_probability=request.minimum_probability,
+            max_speed_kmh=request.max_speed_kmh,
+        )
+
+        snapshots = track.get("snapshots", [])
+
+        if request.snapshot_index >= len(snapshots):
+            return {
+                "status": "error",
+                "message": (
+                    f"snapshot_index {request.snapshot_index} is out of range. "
+                    f"Available snapshots: {len(snapshots)}"
+                ),
+            }
+
+        return build_snapshot_intensity_grid(
+            snapshot=snapshots[request.snapshot_index],
+            grid_size=request.grid_size,
+        )
+
+    except ValueError as exc:
+        return {"status": "error", "message": str(exc)}
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": f"Spatial intensity generation failed: {exc}",
+        }
+
+
+@app.post("/api/v1/ml/track-spatial-event")
+def track_spatial_event_api(request: SpatialEventTrackRequest):
+    """
+    Generate a historical spatial extreme-weather event track.
+
+    The tracker combines ML event probabilities, physics-informed
+    post-processing, spatial centroid tracking, temporal continuity,
+    and movement gating.
+
+    This is historical replay, not live IMD telemetry.
+    """
+    try:
+        return build_spatial_track(
+            start_time=request.start_time,
+            hours=request.hours,
+            event_type=request.event_type,
+            minimum_probability=request.minimum_probability,
+            max_speed_kmh=request.max_speed_kmh,
+        )
+
+    except ValueError as exc:
+        return {
+            "status": "error",
+            "message": str(exc),
+        }
+
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": f"Spatial tracking failed: {exc}",
+        }
+
+
+@app.post("/api/v1/ml/predict-extreme-event")
+def predict_extreme_event_api(request: ExtremeEventPredictionRequest):
+    """
+    Predict the next-hour extreme-weather event for a location.
+
+    Current inference uses the latest engineered historical weather row.
+    It is not live IMD telemetry.
+    """
+    try:
+        return predict_extreme_event(request.location)
+
+    except ValueError as exc:
+        return {
+            "status": "error",
+            "message": str(exc),
+        }
+
+    except FileNotFoundError as exc:
+        return {
+            "status": "error",
+            "message": str(exc),
+        }
+
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": f"ML prediction failed: {exc}",
+        }
+
+
+# ─── AI/ML Multi-City Extreme Event Predictor ─────────────────────────────────
+
+class ExtremeEventMultiPredictionRequest(BaseModel):
+    locations: list[str] = Field(
+        ...,
+        min_length=1,
+        description="List of city/location names"
+    )
+
+
+@app.post("/api/v1/ml/predict-extreme-events")
+def predict_extreme_events_api(
+    request: ExtremeEventMultiPredictionRequest
+):
+    """
+    Predict next-hour extreme-weather events for multiple locations.
+    """
+    try:
+        return predict_extreme_events(request.locations)
+
+    except ValueError as exc:
+        return {
+            "status": "error",
+            "message": str(exc),
+        }
+
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": f"Multi-city ML prediction failed: {exc}",
+        }
+
+
+# ─── VATAVARAN GNN Temperature API ─────────────────────────────────────────────
+@app.post("/api/v1/ml/gnn-temperature")
+def gnn_temperature_prediction(
+    request: GNNTemperatureRequest
+):
+    try:
+        result = predict_gnn_temperature(
+            request.location.strip()
+        )
+
+        return {
+            "status": "success",
+            "analysis_type": "GNN next-hour temperature prediction",
+            "prediction": result,
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc)
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"GNN prediction failed: {str(exc)}"
+        )

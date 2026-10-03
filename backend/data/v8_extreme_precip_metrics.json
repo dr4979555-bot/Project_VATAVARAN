@@ -1,0 +1,359 @@
+{
+  "project": "VATAVARAN",
+  "problem_statement": "PS26078",
+  "model": "VATAVARAN V7 Multi-Horizon Temporal GNN",
+  "fresh_experiment": true,
+  "v6_checkpoint_modified": false,
+  "horizons_hours": [
+    1,
+    6,
+    12,
+    24,
+    48
+  ],
+  "sequence_length": 6,
+  "time_stride": 4,
+  "grid_nodes": 900,
+  "directed_edges": 13688,
+  "training_rows": 210048,
+  "validation_rows": 70272,
+  "test_rows": 70072,
+  "training_sequences": 6547,
+  "validation_sequences": 2179,
+  "test_sequences": 2173,
+  "best_epoch": 5,
+  "best_validation_selection_score": 0.3655978472087128,
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 4.151444944477081,
+      "validation_selection_score": 0.41398385594622067
+    },
+    {
+      "epoch": 2,
+      "train_loss": 3.7448968583583833,
+      "validation_selection_score": 0.37422876181030784
+    },
+    {
+      "epoch": 3,
+      "train_loss": 3.633522992873192,
+      "validation_selection_score": 0.3832864823669914
+    },
+    {
+      "epoch": 4,
+      "train_loss": 3.544638182723522,
+      "validation_selection_score": 0.39094591989821337
+    },
+    {
+      "epoch": 5,
+      "train_loss": 3.6214372480273247,
+      "validation_selection_score": 0.3655978472087128
+    },
+    {
+      "epoch": 6,
+      "train_loss": 3.459581100165844,
+      "validation_selection_score": 0.3680856925025867
+    }
+  ],
+  "validation_metrics_2024": {
+    "1": {
+      "temperature": {
+        "mae": 0.6663855544576518,
+        "rmse": 0.8730320070029728,
+        "r2": 0.9768614208593596
+      },
+      "humidity": {
+        "mae": 3.5850360420878298,
+        "rmse": 4.702904953692137,
+        "r2": 0.9561989960251603
+      },
+      "wind": {
+        "mae": 1.7852445561002843,
+        "rmse": 2.3796198446837122,
+        "r2": 0.8194222719706267
+      },
+      "precipitation": {
+        "mae": 0.156262849493,
+        "rmse": 0.73653547755233,
+        "r2": 0.27283748401418506
+      },
+      "precipitation_occurrence": {
+        "precision": 0.7072899276572064,
+        "recall": 0.8121405750798723,
+        "f1": 0.7560975609756098
+      },
+      "wet_case_precipitation_mae": 0.6817984872667406,
+      "samples": 17432
+    },
+    "6": {
+      "temperature": {
+        "mae": 1.0559816530616308,
+        "rmse": 1.4170495648396204,
+        "r2": 0.9390782623617034
+      },
+      "humidity": {
+        "mae": 6.034855921807886,
+        "rmse": 7.945440784123335,
+        "r2": 0.8765271416338377
+      },
+      "wind": {
+        "mae": 2.822192444446821,
+        "rmse": 3.6412072373833,
+        "r2": 0.5672849195779656
+      },
+      "precipitation": {
+        "mae": 0.2189917760769989,
+        "rmse": 0.8635040246833507,
+        "r2": 0.1168107196721353
+      },
+      "precipitation_occurrence": {
+        "precision": 0.5606694560669456,
+        "recall": 0.7845916795069338,
+        "f1": 0.6539943488312355
+      },
+      "wet_case_precipitation_mae": 0.842167981769043,
+      "samples": 17432
+    },
+    "12": {
+      "temperature": {
+        "mae": 1.1571527384683156,
+        "rmse": 1.526301322093371,
+        "r2": 0.9286130821907419
+      },
+      "humidity": {
+        "mae": 6.402583274561202,
+        "rmse": 8.43734162737714,
+        "r2": 0.8586794375958664
+      },
+      "wind": {
+        "mae": 3.010337961573511,
+        "rmse": 3.900834185004758,
+        "r2": 0.5215949160915607
+      },
+      "precipitation": {
+        "mae": 0.2121553440356382,
+        "rmse": 0.7674149989338569,
+        "r2": 0.10499406014148827
+      },
+      "precipitation_occurrence": {
+        "precision": 0.5198487712665406,
+        "recall": 0.792,
+        "f1": 0.6276946487446107
+      },
+      "wet_case_precipitation_mae": 0.7635038272730494,
+      "samples": 17432
+    },
+    "24": {
+      "temperature": {
+        "mae": 1.0965710167164866,
+        "rmse": 1.4712138245982591,
+        "r2": 0.9336085736662117
+      },
+      "humidity": {
+        "mae": 6.4439430965530375,
+        "rmse": 8.717053784167943,
+        "r2": 0.8491686967029413
+      },
+      "wind": {
+        "mae": 2.9969183804519464,
+        "rmse": 3.91715682142857,
+        "r2": 0.5177075884914129
+      },
+      "precipitation": {
+        "mae": 0.2199055281736485,
+        "rmse": 0.7752828764153368,
+        "r2": 0.08654666043726045
+      },
+      "precipitation_occurrence": {
+        "precision": 0.5235346358792184,
+        "recall": 0.7538363171355499,
+        "f1": 0.6179245283018868
+      },
+      "wet_case_precipitation_mae": 0.7887948114505091,
+      "samples": 17432
+    },
+    "48": {
+      "temperature": {
+        "mae": 1.3207937910667304,
+        "rmse": 1.7669144717117644,
+        "r2": 0.9040677159698959
+      },
+      "humidity": {
+        "mae": 7.526080778401179,
+        "rmse": 10.07831729142643,
+        "r2": 0.7983772637417698
+      },
+      "wind": {
+        "mae": 3.4157520518657427,
+        "rmse": 4.441617229264625,
+        "r2": 0.3800603993175563
+      },
+      "precipitation": {
+        "mae": 0.2372027589062284,
+        "rmse": 0.7859595163059974,
+        "r2": 0.06121457674356512
+      },
+      "precipitation_occurrence": {
+        "precision": 0.4787740733071029,
+        "recall": 0.7391304347826086,
+        "f1": 0.5811235390222446
+      },
+      "wet_case_precipitation_mae": 0.7994231825639062,
+      "samples": 17432
+    },
+    "selection_score": 0.3655978472087128
+  },
+  "test_metrics_2025": {
+    "1": {
+      "temperature": {
+        "mae": 0.6387178889080176,
+        "rmse": 0.8425096383798274,
+        "r2": 0.9743519010106725
+      },
+      "humidity": {
+        "mae": 3.3425593672399962,
+        "rmse": 4.431708680101628,
+        "r2": 0.9609759288906947
+      },
+      "wind": {
+        "mae": 1.6643442847297536,
+        "rmse": 2.183872781616365,
+        "r2": 0.7664026714066996
+      },
+      "precipitation": {
+        "mae": 0.1523588226630764,
+        "rmse": 0.6357857772287918,
+        "r2": 0.2919153475518914
+      },
+      "precipitation_occurrence": {
+        "precision": 0.7176820208023774,
+        "recall": 0.7544517338331771,
+        "f1": 0.7356076759061834
+      },
+      "wet_case_precipitation_mae": 0.6459508204156275,
+      "samples": 17384
+    },
+    "6": {
+      "temperature": {
+        "mae": 1.0448447551477136,
+        "rmse": 1.4043782481289766,
+        "r2": 0.9290865186640145
+      },
+      "humidity": {
+        "mae": 6.144450135895913,
+        "rmse": 8.056438677276025,
+        "r2": 0.8720356480017558
+      },
+      "wind": {
+        "mae": 2.558811363047079,
+        "rmse": 3.2558514992365737,
+        "r2": 0.47224646886845056
+      },
+      "precipitation": {
+        "mae": 0.1959893554645616,
+        "rmse": 0.7010964626393346,
+        "r2": 0.1251793040355218
+      },
+      "precipitation_occurrence": {
+        "precision": 0.5411980720679367,
+        "recall": 0.75456,
+        "f1": 0.6303127506014434
+      },
+      "wet_case_precipitation_mae": 0.7305434118257835,
+      "samples": 17384
+    },
+    "12": {
+      "temperature": {
+        "mae": 1.1831719905508316,
+        "rmse": 1.5640496232915844,
+        "r2": 0.9118503509014415
+      },
+      "humidity": {
+        "mae": 6.440709816273928,
+        "rmse": 8.507138804632117,
+        "r2": 0.8552094170182842
+      },
+      "wind": {
+        "mae": 2.5946244237832192,
+        "rmse": 3.3083497885673996,
+        "r2": 0.46673222858384933
+      },
+      "precipitation": {
+        "mae": 0.20676071214985337,
+        "rmse": 0.7524739378987199,
+        "r2": 0.0975571272888267
+      },
+      "precipitation_occurrence": {
+        "precision": 0.53505291005291,
+        "recall": 0.7523248605083696,
+        "f1": 0.6253542901314094
+      },
+      "wet_case_precipitation_mae": 0.7049299996250317,
+      "samples": 17384
+    },
+    "24": {
+      "temperature": {
+        "mae": 1.090999583796428,
+        "rmse": 1.4705924674323292,
+        "r2": 0.9220115733705653
+      },
+      "humidity": {
+        "mae": 6.380072650303777,
+        "rmse": 8.684585818798823,
+        "r2": 0.8491276086534589
+      },
+      "wind": {
+        "mae": 2.613110838098785,
+        "rmse": 3.3431669323013766,
+        "r2": 0.45584800840405393
+      },
+      "precipitation": {
+        "mae": 0.21473424268551022,
+        "rmse": 0.7606137553480555,
+        "r2": 0.07792734160165593
+      },
+      "precipitation_occurrence": {
+        "precision": 0.5289620018535681,
+        "recall": 0.7076875387476751,
+        "f1": 0.6054097056483692
+      },
+      "wet_case_precipitation_mae": 0.7369036692100833,
+      "samples": 17384
+    },
+    "48": {
+      "temperature": {
+        "mae": 1.3505609821077322,
+        "rmse": 1.7953615263989375,
+        "r2": 0.8837806818498978
+      },
+      "humidity": {
+        "mae": 7.7433840110452286,
+        "rmse": 10.38393883133874,
+        "r2": 0.7843080601098684
+      },
+      "wind": {
+        "mae": 3.004593149012703,
+        "rmse": 3.8056247906104628,
+        "r2": 0.29539964689454157
+      },
+      "precipitation": {
+        "mae": 0.22726931407147224,
+        "rmse": 0.7713291768184279,
+        "r2": 0.051762450251707115
+      },
+      "precipitation_occurrence": {
+        "precision": 0.4803063457330416,
+        "recall": 0.6801983266191509,
+        "f1": 0.5630370655380275
+      },
+      "wet_case_precipitation_mae": 0.7316930606572862,
+      "samples": 17384
+    },
+    "selection_score": 0.3482463807584628
+  },
+  "outputs": {
+    "checkpoint": "C:\\Users\\DELL\\Downloads\\Project_VATAVARAN-main\\Project_VATAVARAN-main\\backend\\models\\vatavaran_gnn_v8_extreme_precip.pt",
+    "test_metrics_csv": "C:\\Users\\DELL\\Downloads\\Project_VATAVARAN-main\\Project_VATAVARAN-main\\backend\\data\\v8_extreme_precip_2025_metrics.csv",
+    "grid_forecast_npz": "C:\\Users\\DELL\\Downloads\\Project_VATAVARAN-main\\Project_VATAVARAN-main\\backend\\data\\v8_extreme_precip_grid_forecasts_2025.npz"
+  }
+}
