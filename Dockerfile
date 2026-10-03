@@ -93,6 +93,7 @@ RUN pip install --no-cache-dir \
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 COPY tests/ ./tests/
+COPY data/sample/ ./data/sample/
 COPY README.md ROADMAP.md ./
 
 # --------------------------------------------------------------------------------

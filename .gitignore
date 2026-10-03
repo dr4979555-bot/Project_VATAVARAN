@@ -121,3 +121,7 @@ backend/v14_*
 backend/v15_*
 
 backend/v8_raw_*.csv
+
+# ── Phase 3 offline sample grid (committed on purpose; compressed & tiny) ─────
+!data/sample/
+!data/sample/*.nc

@@ -64,3 +64,7 @@ backend/models/
 *.zarr/
 data/raw/
 data/interim/
+
+# ── Phase 3 offline sample grid (committed on purpose; ~small, compressed) ───
+!data/sample/
+!data/sample/**

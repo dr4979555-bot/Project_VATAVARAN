@@ -11,9 +11,8 @@
 | :--- | :--- | :--- |
 | **Phase 0: Core Prototype & Gov Feeds** | **COMPLETED** ✅ | Full REST API (15 routes), broadsheet GIS UI, 5 Indian Gov APIs, ITU-T X.1303 CAP XML export, launch video (`brag.mp4`), pushed to GitHub. |
 | **Phase 1: Automated Test Suite & CI/CD** | **COMPLETED** ✅ | 27/27 tests passing across `test_api.py`, `test_gov_services.py`, and `test_downscale.py`, plus `.github/workflows/ci.yml`. |
-| **Phase 2: Containerization (Docker)** | **COMPLETED** ✅ | Production `Dockerfile` (Python 3.11 slim, non-root user, CPU-only PyTorch), `docker-compose.yml` (healthcheck, `.env` injection, restart policy), and `.dockerignore` (secrets & caches excluded). Verified 27/27 tests green. |
-| **Phase 3: NetCDF4 / GRIB2 Ingestion** | **PLANNED** 📋 | `xarray` parser for NCMRWF 12 km binary forecast state vectors. |
-| **Phase 4: SQLite Database Persistence** | **PLANNED** 📋 | Persist anomaly history, station observations, and dispatched CAP alerts. |
+| **Phase 3: Raw NetCDF4 & GRIB2 Ingestion** | **COMPLETED** ✅ | `backend/ingestion.py` — 9-channel state vectors (181×361), IMDAA/ERA5 seasonal standardization, OpenDAP→offline fallback, `POST /api/v1/ingest/cycle` + `GET /api/v1/ingest/channels`, committed sample grid, physical unit autoconformance, Windows file-lock defense, and error hardening. 46/46 tests green. |
+| **Phase 4: SQLite Database Persistence** | **UP NEXT** 🏁 | Persist anomaly history, station observations, and dispatched CAP alerts. |
 | **Phase 5: Background Task Scheduler** | **PLANNED** 📋 | Autonomous 6-hour forecast cycle polling (00, 06, 12, 18 UTC). |
 | **Phase 6: PyTorch Model Loader** | **PLANNED** 📋 | Modular `.safetensors` checkpoint loader for GNN and Diffusion U-Net. |
 
@@ -21,7 +20,7 @@
 
 ## 🏁 WHERE TO RESUME (Immediate Starting Point)
 
-When you return, start directly with **Phase 3 (Raw NetCDF4 & GRIB2 Ingestion Engine)**.
+When you return, start directly with **Phase 4 (Database Persistence with SQLite)**.
 
 ### Quick Command to Resume Work
 
@@ -91,7 +90,7 @@ git status
 
 ---
 
-### Phase 3: Raw NetCDF4 & GRIB2 Ingestion Engine (`backend/ingestion.py`)
+### Phase 3: Raw NetCDF4 & GRIB2 Ingestion Engine (`backend/ingestion.py`) (COMPLETED ✅)
 
 *Objective: Bridge raw binary weather data from NCMRWF OpenDAP servers into normalized NumPy/PyTorch tensors.*
 
@@ -111,6 +110,12 @@ git status
   ```
 
 - **Exit Criteria**: Successfully extracts atmospheric variables from `.nc` files into ready-to-track tensors.
+
+- **Delivered**:
+  1. `backend/ingestion.py` — `xarray` + `netCDF4` + `numpy` engine (torch optional) with alias & pressure-level variable resolution, finite-cell climatological imputation, seasonal IMDAA/ERA5 standardization `(X − μ_d)/(σ_d + 1e-6)`, GRIB2 path (optional `cfgrib`), and graceful **remote OpenDAP → offline sample** fallback.
+  2. `data/sample/neps_sample.nc` — deterministic 12 km NEPS-G mock (1.0° grid, 181×361, 9 zlib-compressed channels, ~1.6 MB) committed via `.gitignore` / `.dockerignore` negation; `COPY data/sample/` added to `Dockerfile`.
+  3. REST endpoints — `POST /api/v1/ingest/cycle` (JSON path *or* multipart upload) and `GET /api/v1/ingest/channels` (catalog + baseline). Added `python-multipart` to `requirements.txt` for upload parsing.
+  4. `tests/test_ingestion.py` — 19 comprehensive unit/integration/edge-case tests; full suite **46/46 passing**.
 
 ---
 
@@ -182,5 +187,6 @@ git status
 - [x] 2. Activate `.venv`: `.venv\Scripts\Activate.ps1`
 - [x] 3. Run: `git status` (confirm `main` is clean)
 - [x] 4. Phase 2 delivered: `Dockerfile`, `docker-compose.yml`, `.dockerignore` — 27/27 tests green
-- [ ] 5. Next: Phase 3 — Raw NetCDF4 & GRIB2 Ingestion Engine (`backend/ingestion.py`)
+- [x] 5. Phase 3 delivered & audited: `backend/ingestion.py` + sample grid + 2 endpoints + bug fixes — 46/46 tests green
+- [ ] 6. Next: Phase 4 — SQLite Database Persistence (`backend/database.py`)
 ```

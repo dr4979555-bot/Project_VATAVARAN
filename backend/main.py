@@ -5,21 +5,27 @@ Implements the core endpoints from the Technical Requirements Document:
   GET  /api/v1/forecast/track       — Anomaly trajectory retrieval
   POST /api/v1/downscale/generate   — Physics-constrained diffusion downscaling
   GET  /api/v1/system/status        — Pipeline health & stage indicators
+  POST /api/v1/ingest/cycle         — Raw NetCDF4/GRIB2/OpenDAP → 9-channel state vector
+  GET  /api/v1/ingest/channels      — Ingestion channel catalog & climatology baseline
 """
 
 import importlib
+import json
 import math
 import os
 import random
+import tempfile
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Optional, Any
+from uuid import uuid4
 
 from fastapi import FastAPI, Query, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -75,6 +81,26 @@ except ImportError:
         IMDStationObservation,
         MOSDACProduct,
         CAPAlertPayload,
+    )
+
+# ─── Raw Gridded Data Ingestion Engine (Phase 3) ──────────────────────────────
+try:
+    from backend.ingestion import (
+        ingest_ncmrwf_cycle,
+        create_mock_neps_netcdf,
+        CHANNELS as INGEST_CHANNELS,
+        CHANNEL_CATALOG as INGEST_CHANNEL_CATALOG,
+        DOMAIN as INGEST_DOMAIN,
+        MissingChannelError,
+    )
+except ImportError:
+    from ingestion import (
+        ingest_ncmrwf_cycle,
+        create_mock_neps_netcdf,
+        CHANNELS as INGEST_CHANNELS,
+        CHANNEL_CATALOG as INGEST_CHANNEL_CATALOG,
+        DOMAIN as INGEST_DOMAIN,
+        MissingChannelError,
     )
 
 # ─── App Init ──────────────────────────────────────────────────────────────────
@@ -476,6 +502,104 @@ async def system_status():
     )
 
 
+# ─── Raw Gridded Data Ingestion API (Phase 3) ─────────────────────────────────
+
+class IngestCycleRequest(BaseModel):
+    """JSON payload for path/URL-based raw grid ingestion."""
+    source: Optional[str] = Field(
+        default=None,
+        description=(
+            "Local NetCDF4/GRIB2 path or remote OpenDAP URL. "
+            "Omit to use the live NCMRWF stream (bundled offline grid on fallback)."
+        ),
+    )
+    return_torch: bool = Field(
+        default=False,
+        description="Reserved; the HTTP layer summarizes tensors instead of streaming them.",
+    )
+
+
+@app.get("/api/v1/ingest/channels")
+async def ingest_channels_catalog():
+    """Returns the 9-channel state-vector catalog: names, units, levels and IMDAA/ERA5 baseline statistics."""
+    return {
+        "status": "ok",
+        "count": len(INGEST_CHANNELS),
+        "order": INGEST_CHANNELS,
+        "standardization": "Xhat = (X - mu_c(d)) / (sigma_c(d) + 1e-6)",
+        "domain": INGEST_DOMAIN,
+        "channels": INGEST_CHANNEL_CATALOG,
+    }
+
+
+@app.post("/api/v1/ingest/cycle")
+async def ingest_cycle_api(request: Request):
+    """
+    Phase 3 — Ingest a raw NCMRWF model cycle and return the normalized summary.
+
+    Two input modes on the same route:
+      * JSON body:        {"source": "data/sample/neps_sample.nc"}
+      * Multipart upload: curl -F "file=@neps_sample.nc" http://localhost:8000/api/v1/ingest/cycle
+
+    The full (9, H, W) state-vector tensor is heavy to serialize as JSON, so the
+    API returns shape, grid, timestamps and per-channel statistics/metadata. For
+    in-process tensor access call backend.ingestion.ingest_ncmrwf_cycle directly.
+    """
+    content_type = request.headers.get("content-type", "").lower()
+    try:
+        if "multipart/form-data" in content_type:
+            form = await request.form()
+            upload = form.get("file")
+            if upload is None or not hasattr(upload, "filename") or not upload.filename:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Multipart upload must include a 'file' part.",
+                )
+            data = await upload.read()
+            if len(data) == 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Uploaded file is empty (0 bytes).",
+                )
+            if len(data) > 250 * 1024 * 1024:
+                raise HTTPException(
+                    status_code=413,
+                    detail="Uploaded file exceeds 250 MB size limit.",
+                )
+            suffix = Path(upload.filename).suffix.lower() or ".nc"
+            tmp_path = Path(tempfile.gettempdir()) / f"vatawaran_ingest_{uuid4().hex}{suffix}"
+            tmp_path.write_bytes(data)
+            try:
+                _, meta = ingest_ncmrwf_cycle(source=str(tmp_path))
+            finally:
+                try:
+                    tmp_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
+            return {"status": "ingested", **meta}
+
+        try:
+            body = await request.json()
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON body: {exc}")
+
+        if not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="JSON body must be an object.")
+
+        payload = IngestCycleRequest(**body)
+        _, meta = ingest_ncmrwf_cycle(source=payload.source)
+        return {"status": "ingested", **meta}
+
+    except HTTPException:
+        raise
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON body: {exc}")
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {type(exc).__name__}: {exc}")
+
+
 @app.get("/api/v1/forecast/track", response_model=TrackResponse)
 async def get_forecast_tracks(
     lead_time_min: int = Query(default=48, description="Minimum lead time in hours"),
@@ -853,14 +977,18 @@ async def get_system_errors():
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
     if exc.status_code == 404:
         if request.url.path.startswith("/api/"):
-            return Response(
-                content='{"status":"error","message":"Endpoint not found"}',
+            return JSONResponse(
+                content={"status": "error", "message": "Endpoint not found"},
                 status_code=404,
-                media_type="application/json",
             )
         path_404 = os.path.join(FRONTEND_DIR, "404.html")
         if os.path.exists(path_404):
             return FileResponse(path_404, status_code=404, media_type="text/html")
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            content={"status": "error", "detail": exc.detail},
+            status_code=exc.status_code,
+        )
     return Response(content=str(exc.detail), status_code=exc.status_code)
 
 
