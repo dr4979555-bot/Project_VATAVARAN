@@ -7,11 +7,12 @@ Implements the core endpoints from the Technical Requirements Document:
   GET  /api/v1/system/status        — Pipeline health & stage indicators
 """
 
+import importlib
 import math
 import os
 import random
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Any
 
 from fastapi import FastAPI, Query, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,14 +20,22 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+def _load_optional_attr(module_names: list[str], attr_name: str) -> Any:
+    """Safely loads an attribute from candidate module paths if available."""
+    for mod_name in module_names:
+        try:
+            mod = importlib.import_module(mod_name)
+            if hasattr(mod, attr_name):
+                return getattr(mod, attr_name)
+        except (ImportError, ModuleNotFoundError):
+            continue
+    return None
+
 # ─── VATAVARAN GNN ─────────────────────────────────────────────────────────────
-try:
-    from app.ml.vatavaran_gnn_predictor import predict_gnn_temperature
-except ImportError:
-    try:
-        from backend.app.ml.vatavaran_gnn_predictor import predict_gnn_temperature
-    except ImportError:
-        predict_gnn_temperature = None
+predict_gnn_temperature = _load_optional_attr(
+    ["app.ml.vatavaran_gnn_predictor", "backend.app.ml.vatavaran_gnn_predictor"],
+    "predict_gnn_temperature",
+)
 
 
 # ─── Data Ingestion (xarray / OpenDAP) ─────────────────────────────────────────
@@ -636,40 +645,30 @@ if os.path.isdir(FRONTEND_DIR):
     app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
 
 # ─── AI/ML Extreme Event Predictor ────────────────────────────────────────────
-try:
-    from backend.app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
-except ImportError:
-    try:
-        from app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
-    except ImportError:
-        predict_extreme_event = None
-        predict_extreme_events = None
-
-try:
-    from backend.app.ml.spatial_event_tracker import build_spatial_track
-except ImportError:
-    try:
-        from app.ml.spatial_event_tracker import build_spatial_track
-    except ImportError:
-        build_spatial_track = None
-
-try:
-    from backend.app.ml.spatial_intensity import (
-        build_snapshot_intensity_grid,
-        build_track_intensity_sequence,
-        build_track_segments,
-    )
-except ImportError:
-    try:
-        from app.ml.spatial_intensity import (
-            build_snapshot_intensity_grid,
-            build_track_intensity_sequence,
-            build_track_segments,
-        )
-    except ImportError:
-        build_snapshot_intensity_grid = None
-        build_track_intensity_sequence = None
-        build_track_segments = None
+predict_extreme_event = _load_optional_attr(
+    ["backend.app.ml.extreme_event_predictor", "app.ml.extreme_event_predictor"],
+    "predict_extreme_event",
+)
+predict_extreme_events = _load_optional_attr(
+    ["backend.app.ml.extreme_event_predictor", "app.ml.extreme_event_predictor"],
+    "predict_extreme_events",
+)
+build_spatial_track = _load_optional_attr(
+    ["backend.app.ml.spatial_event_tracker", "app.ml.spatial_event_tracker"],
+    "build_spatial_track",
+)
+build_snapshot_intensity_grid = _load_optional_attr(
+    ["backend.app.ml.spatial_intensity", "app.ml.spatial_intensity"],
+    "build_snapshot_intensity_grid",
+)
+build_track_intensity_sequence = _load_optional_attr(
+    ["backend.app.ml.spatial_intensity", "app.ml.spatial_intensity"],
+    "build_track_intensity_sequence",
+)
+build_track_segments = _load_optional_attr(
+    ["backend.app.ml.spatial_intensity", "app.ml.spatial_intensity"],
+    "build_track_segments",
+)
 
 
 class ExtremeEventPredictionRequest(BaseModel):

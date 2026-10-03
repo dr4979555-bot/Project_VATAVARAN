@@ -23,7 +23,8 @@
 
 When you return, start directly with **Phase 2 (Containerization & Deployment Orchestration)**.
 
-### Quick Command to Resume Work:
+### Quick Command to Resume Work
+
 ```powershell
 # 1. Activate your virtual environment:
 .venv\Scripts\Activate.ps1
@@ -40,6 +41,7 @@ git status
 ## 🗺️ Detailed Phase Breakdown
 
 ### Phase 1: Automated Pytest Suite & GitHub Actions CI (COMPLETED ✅)
+
 *Objective: Build an automated test suite so any changes are verified with one command (`pytest tests/`) and GitHub automatically tests every commit.*
 
 - **Tasks**:
@@ -48,14 +50,17 @@ git status
   3. `tests/test_downscale.py`: Verify mass divergence, moisture flux checks, and 5 km GeoJSON output structure.
   4. `.github/workflows/ci.yml`: Add GitHub Actions workflow to run tests on push/pull-request.
 - **Verification Target**:
+
   ```bash
   pytest tests/ -v --tb=short
   ```
+
 - **Exit Criteria**: 100% green test run across all endpoints without external network dependencies (mock fallbacks tested).
 
 ---
 
 ### Phase 2: Containerization & Deployment Orchestration
+
 *Objective: Package the full stack into a Docker container so anyone can run the app with 1 command (`docker compose up`).*
 
 - **Prerequisites Note**:
@@ -66,15 +71,18 @@ git status
   2. `docker-compose.yml`: Configure port mapping (`8000:8000`), `.env` injection, and volume mounts.
   3. `.dockerignore`: Exclude `.venv/`, `__pycache__/`, `.agent/`, `.git/` to keep container image lightweight (~250MB).
 - **Verification Target**:
+
   ```bash
   docker compose up --build -d
   curl http://localhost:8000/api/v1/system/status
   ```
+
 - **Exit Criteria**: Clean container spin-up serving the GIS dashboard on port 8000.
 
 ---
 
 ### Phase 3: Raw NetCDF4 & GRIB2 Ingestion Engine (`backend/ingestion.py`)
+
 *Objective: Bridge raw binary weather data from NCMRWF OpenDAP servers into normalized NumPy/PyTorch tensors.*
 
 - **Tasks**:
@@ -85,16 +93,19 @@ git status
      $$\hat{X}_t = \frac{X_t - \mu_c(d)}{\sigma_c(d) + 10^{-6}}$$
   4. Create `data/sample/` with a lightweight 12 km sample NetCDF grid for offline verification.
 - **Verification Target**:
+
   ```python
   from backend.ingestion import ingest_ncmrwf_cycle
   tensor = ingest_ncmrwf_cycle("data/sample/neps_sample.nc")
   assert tensor.shape[-2:] == (181, 361)
   ```
+
 - **Exit Criteria**: Successfully extracts atmospheric variables from `.nc` files into ready-to-track tensors.
 
 ---
 
 ### Phase 4: Database Persistence (`backend/database.py` with SQLite)
+
 *Objective: Replace in-memory dictionaries with zero-config SQLite persistence (`vatavaran.db`).*
 
 - **Tasks**:
@@ -107,14 +118,17 @@ git status
      - `GET /api/v1/history/anomalies`: List previously identified weather anomalies.
      - `GET /api/v1/history/alerts`: Audit log of emergency warnings dispatched.
 - **Verification Target**:
+
   ```bash
   curl http://localhost:8000/api/v1/history/alerts
   ```
+
 - **Exit Criteria**: Generated downscaling events and CAP alerts persist across server restarts.
 
 ---
 
 ### Phase 5: Autonomous Background Polling & Early Warning Scheduler
+
 *Objective: Transform VATAWARAN into a live 24/7 autonomous monitoring service.*
 
 - **Tasks**:
@@ -132,6 +146,7 @@ git status
 ---
 
 ### Phase 6: Deep Learning Checkpoint Loader (`backend/ml/`)
+
 *Objective: Prepare model execution slots for trained PyTorch / Safetensors weights.*
 
 - **Tasks**:
@@ -141,9 +156,11 @@ git status
      - If weights exist in `models/`: run neural inference on GPU/CPU.
      - If weights are absent: seamlessly fall back to the analytical physics simulation.
 - **Verification Target**:
+
   ```bash
   python -c "from backend.ml.loader import load_models; print(load_models())"
   ```
+
 - **Exit Criteria**: Seamless toggle between real ML weights and analytical simulation.
 
 ---
@@ -154,6 +171,5 @@ git status
 - [ ] 1. Open terminal in `d:\VATAWARAN`
 - [ ] 2. Activate `.venv`: `.venv\Scripts\Activate.ps1`
 - [ ] 3. Run: `git status` (confirm `main` is clean)
-- [ ] 4. Start Phase 1: Create `tests/test_api.py` and run `pytest`
-- [ ] 5. Optional: Install Docker Desktop to run Phase 2 containerization
+- [ ] 4. Start Phase 2: Create Dockerfile and test container spin-up
 ```
