@@ -71,3 +71,35 @@ desktop.ini
 *.backup-*
 
 backend/data/v8_anomaly_tracking_2025.json
+
+# VATAVARAN local experiments / diagnostics
+backend/debug_v8_*.py
+backend/patch_v8_*.py
+backend/apply_v8_*.ps1
+backend/audit_v8_output_scale.py
+backend/compare_v7_v8_extreme_precip.py
+backend/validate_v7_v8_occurrence_probability.py
+
+# Experimental ML versions and backups
+backend/app/ml/*backup*.py
+backend/app/ml/*.bak
+backend/app/ml/v6_*.py
+backend/app/ml/v7_*.py
+backend/app/ml/vatavaran_gnn.py
+backend/app/ml/vatavaran_gnn_predictor.py
+backend/app/ml/vatavaran_v6_*.py
+backend/app/ml/extreme_event_*.py
+backend/app/ml/spatial_*.py
+backend/app/ml/gnn_tensor_builder.py
+backend/app/ml/physics_constraints.py
+backend/app/ml/evaluate_*.py
+backend/app/ml/compare_*.py
+backend/app/ml/train_extreme_event_model.py
+backend/app/ml/train_vatavaran_gnn.py
+backend/app/ml/train_vatavaran_gnn_v2_backup.py
+backend/app/ml/train_vatavaran_gnn_v3_multivariable.py
+backend/app/ml/train_vatavaran_gnn_v4_residual.py
+
+# Local ML datasets / generated outputs
+backend/data/
+backend/models/
