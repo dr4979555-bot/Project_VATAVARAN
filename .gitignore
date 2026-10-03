@@ -69,3 +69,5 @@ desktop.ini
 
 # Local backup files
 *.backup-*
+
+backend/data/v8_anomaly_tracking_2025.json
