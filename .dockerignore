@@ -1,0 +1,66 @@
+# ================================================================================
+# PROJECT VATAWARAN — Docker Build Context Exclusions
+# Keeps the container image lightweight (~250-300 MB) and stops secrets or
+# local artifacts from leaking into the image.
+# ================================================================================
+
+# ── Version control & CI ──────────────────────────────────────────────────────
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# ── Virtual environments & Python caches ─────────────────────────────────────
+.venv/
+venv/
+env/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# ── Secrets — NEVER copy credentials into the image (runtime .env only) ──────
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# ── Agent / tooling artifacts ─────────────────────────────────────────────────
+.agent/
+.agents/
+.gemini/
+brag-output/
+skills-lock.json
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── IDE & OS noise ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Large model weights & raw gridded data (Phase 3/6 artifacts) ─────────────
+models/
+backend/models/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.h5
+*.hdf5
+*.nc
+*.grib
+*.grib2
+*.zarr/
+data/raw/
+data/interim/

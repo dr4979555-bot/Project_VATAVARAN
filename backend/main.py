@@ -145,7 +145,14 @@ class SecurityAndRateLimitMiddleware(BaseHTTPMiddleware):
         response.headers["X-RateLimit-Remaining"] = str(max(0, RATE_LIMIT_MAX - len(IP_REQUEST_LOG[client_ip])))
 
         # 5. Fast caching headers for static assets
-        if request.url.path.startswith("/frontend/") or request.url.path in ["/favicon.ico", "/robots.txt", "/sitemap.xml"]:
+        if request.url.path.startswith("/frontend/") or request.url.path in [
+            "/favicon.ico",
+            "/robots.txt",
+            "/sitemap.xml",
+            "/styles.css",
+            "/app.js",
+            "/og-preview.svg",
+        ]:
             response.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
 
         return response

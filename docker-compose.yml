@@ -1,0 +1,51 @@
+# ================================================================================
+# PROJECT VATAWARAN — Docker Compose Orchestration
+# AI-Driven Spatio-Temporal Extreme Weather Tracking & Downscaling Engine
+# Smart India Hackathon 2026 | Problem Statement ID: 26078
+# ================================================================================
+#
+# Quick start (1 command):
+#   1) cp .env.example .env                        # one-time; secrets stay on host
+#   2) docker compose up --build -d                # build image & start container
+#   3) open http://localhost:8000                  # GIS dashboard
+#
+# Health: docker inspect --format='{{json .State.Health}}' vatavaran-app
+
+name: vatavaran
+
+services:
+  vatavaran-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vatavaran-app:latest
+    container_name: vatavaran-app
+
+    # Publish the API / GIS dashboard on the host.
+    ports:
+      - "8000:8000"
+
+    # Inject Government API credentials & server configuration at runtime.
+    # `required: false` keeps `docker compose up` working on a fresh clone
+    # that has not created `.env` yet (Compose v2.24+ object form).
+    env_file:
+      - path: .env
+        required: false
+
+    # Ensure the container restarts (unless the operator stops it manually).
+    restart: unless-stopped
+
+    # Liveness probe — fails until uvicorn answers on the status endpoint.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+    # ── Phase 4 (SQLite persistence) will add a writable volume, e.g.:
+    # volumes:
+    #   - vatavaran-data:/app/data
+    #
+    # volumes:
+    #   vatavaran-data:
