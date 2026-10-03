@@ -103,3 +103,21 @@ backend/app/ml/train_vatavaran_gnn_v4_residual.py
 # Local ML datasets / generated outputs
 backend/data/
 backend/models/
+
+# VATAVARAN local V7-V15 experiments
+backend/app/ml/train_vatavaran_gnn_v7_multihorizon.py
+
+backend/v7_v8_*.csv
+backend/v8_raw_*.py
+
+backend/v9_*.py
+backend/v9_*.csv
+
+backend/v10_*
+backend/v11_*
+backend/v12_*
+backend/v13_*
+backend/v14_*
+backend/v15_*
+
+backend/v8_raw_*.csv
