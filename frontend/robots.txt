@@ -1,0 +1,9 @@
+# Project VATAWARAN Robots Policy
+User-agent: *
+Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /docs
+Disallow: /api/
+
+Sitemap: https://vatawaran.gov.in/sitemap.xml

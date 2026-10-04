@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Project VATAWARAN Terms & Conditions — Operational guidelines, scientific disclaimers, and open government data usage.">
+  <title>Terms &amp; Conditions · Project VATAWARAN</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper-0: #fefcf7; --paper-1: #faf7f0; --paper-2: #f4efe4;
+      --ink-deep: #1a1510; --ink-base: #2c2418; --ink-mid: #4a3f2f; --ink-light: #594935;
+      --red: #8b1a1a; --red-2: #b22222; --rule: #c0a878; --rule-light: #ddd0b8;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body: 'EB Garamond', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', Courier, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--paper-1);
+      color: var(--ink-base);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.7;
+      padding: 30px 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 820px;
+      width: 100%;
+      background: var(--paper-0);
+      border: 3px double var(--rule);
+      box-shadow: 0 4px 20px rgba(44, 36, 24, 0.08);
+      padding: 40px 48px;
+    }
+    header {
+      border-bottom: 2px solid var(--rule);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .back-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--red);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .back-nav:hover { text-decoration: underline; }
+    h1 {
+      font-family: var(--font-display);
+      font-size: 32px;
+      color: var(--ink-deep);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .subtitle {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--red);
+      margin: 28px 0 12px;
+      border-bottom: 1px solid var(--rule-light);
+      padding-bottom: 4px;
+    }
+    p, ul { margin-bottom: 16px; color: var(--ink-mid); }
+    ul { padding-left: 24px; }
+    li { margin-bottom: 6px; }
+    strong { color: var(--ink-deep); }
+    .alert-box {
+      background: var(--paper-2);
+      border-left: 4px solid var(--red);
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--ink-deep);
+    }
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--rule-light);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-light);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="/" class="back-nav">← Return to Synoptic Bulletin</a>
+      <h1>Terms &amp; Conditions of Operation</h1>
+      <p class="subtitle">Smart India Hackathon 2026 · Problem Statement #26078 · Open Scientific Prototype</p>
+    </header>
+
+    <main>
+      <div class="alert-box">
+        <strong>CRITICAL METEOROLOGICAL NOTICE:</strong> VATAWARAN is an advanced AI research and technology demonstration system. For active emergency civil protection and evacuation actions, always consult official forecasts released directly by the India Meteorological Department (IMD) and National Disaster Management Authority (NDMA).
+      </div>
+
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing or interacting with Project <strong>VATAWARAN</strong>, you acknowledge that you have read, understood, and agreed to be bound by these operational conditions and scientific guidelines.</p>
+
+      <h2>2. Permitted Scientific &amp; Public Use</h2>
+      <p>This software and its programmatic interfaces are provided for research, meteorological education, and hackathon evaluation. You are permitted to:</p>
+      <ul>
+        <li>Inspect and verify spatial weather anomaly tracks and 5 km downscaled fields.</li>
+        <li>Download and audit ITU-T X.1303 CAP v1.2 XML emergency advisory documents.</li>
+        <li>Integrate with the documented REST API endpoints in accordance with standard fair-use quotas.</li>
+      </ul>
+
+      <h2>3. Prohibited Conduct &amp; Bot Restrictions</h2>
+      <p>To preserve computing capacity for downscaling simulations, the following activities are strictly prohibited:</p>
+      <ul>
+        <li>Automated denial-of-service, excessive parallel tensor queries, or intentional resource exhaustion.</li>
+        <li>Impersonation of National Disaster Management Authority emergency broadcast signals on external channels.</li>
+        <li>Circumventing API rate limits or automated security protections.</li>
+      </ul>
+
+      <h2>4. Intellectual Property &amp; Open Source</h2>
+      <p>The core machine learning pipeline, spatial tracker, and interface code are licensed under the permissive <strong>MIT License</strong>. Public environmental datasets remain the property of their respective originating bodies (MoES, NCMRWF, IMD, ISRO/SAC, and NDMA).</p>
+
+      <h2>5. Limitation of Liability</h2>
+      <p>In no event shall the authors, hackathon contributors, or host institutions be held liable for any damages, disruptions, or decisions arising from the experimental application of downscaled numerical simulations.</p>
+    </main>
+
+    <footer>
+      <span>Version 1.0.0 · Effective: October 2026</span>
+      <span>MoES / SIH 2026 Prototype</span>
+    </footer>
+  </div>
+</body>
+</html>
