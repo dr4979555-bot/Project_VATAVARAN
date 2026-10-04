@@ -2061,6 +2061,8 @@ async def vatavaran_freeform_chat(payload: dict):
                         ),
                         "centroid": point.get("centroid"),
                         "efi_score": point.get("efi_score"),
+                        "severity": point.get("severity"),
+                        "physics_consistency": point.get("physics_consistency"),
                         "speed_kmh": point.get("speed_kmh"),
                         "movement_bearing_deg": point.get(
                             "movement_bearing_deg"
@@ -2085,6 +2087,315 @@ async def vatavaran_freeform_chat(payload: dict):
 
         compact_anomalies.append(item)
 
+    # V8 is a spatial forecast grid, so city names may not exist inside
+    # anomaly records. Build a grounded nearest-track context from coordinates.
+    city_aliases = {
+        "patna": ["patna"],
+        "delhi": ["delhi", "new delhi", "dilli"],
+        "mumbai": ["mumbai", "bombay"],
+        "kolkata": ["kolkata", "calcutta"],
+        "chennai": ["chennai", "madras"],
+        "bengaluru": ["bengaluru", "bangalore"],
+        "hyderabad": ["hyderabad"],
+        "ahmedabad": ["ahmedabad"],
+    }
+
+    city_coordinates = {
+        "patna": (25.5941, 85.1376),
+        "delhi": (28.6139, 77.2090),
+        "mumbai": (19.0760, 72.8777),
+        "kolkata": (22.5726, 88.3639),
+        "chennai": (13.0827, 80.2707),
+        "bengaluru": (12.9716, 77.5946),
+        "hyderabad": (17.3850, 78.4867),
+        "ahmedabad": (23.0225, 72.5714),
+    }
+
+    requested_city = next(
+        (
+            city
+            for city, aliases in city_aliases.items()
+            if any(alias in query.lower() for alias in aliases)
+        ),
+        None,
+    )
+
+    location_matches = []
+
+    if requested_city:
+        import math
+
+        target_lat, target_lon = city_coordinates[requested_city]
+
+        def _distance_km(lat1, lon1, lat2, lon2):
+            radius_km = 6371.0
+            p1 = math.radians(lat1)
+            p2 = math.radians(lat2)
+            dp = math.radians(lat2 - lat1)
+            dl = math.radians(lon2 - lon1)
+
+            h = (
+                math.sin(dp / 2) ** 2
+                + math.cos(p1)
+                * math.cos(p2)
+                * math.sin(dl / 2) ** 2
+            )
+
+            return radius_km * 2 * math.asin(math.sqrt(h))
+
+        for item in raw_anomalies[:20]:
+            for point in item.get("trajectories", []):
+                centroid = point.get("centroid")
+
+                if not isinstance(centroid, list) or len(centroid) < 2:
+                    continue
+
+                try:
+                    lon = float(centroid[0])
+                    lat = float(centroid[1])
+                except (TypeError, ValueError):
+                    continue
+
+                if not (math.isfinite(lat) and math.isfinite(lon)):
+                    continue
+
+                distance = _distance_km(
+                    target_lat,
+                    target_lon,
+                    lat,
+                    lon,
+                )
+
+                if distance <= 100:
+                    location_matches.append(
+                        {
+                            "anomaly_id": item.get("anomaly_id"),
+                            "hazard_type": item.get("hazard_type"),
+                            "distance_km": round(distance, 1),
+                            "lead_time_hours": point.get("lead_time_hours"),
+                            "latitude": lat,
+                            "longitude": lon,
+                            "severity": point.get(
+                                "severity",
+                                point.get("efi_score"),
+                            ),
+                            "physics_consistency": point.get(
+                                "physics_consistency"
+                            ),
+                            "wind": point.get("wind"),
+                            "precipitation": point.get(
+                                "precipitation"
+                            ),
+                        }
+                    )
+
+        # Preserve all nearby trajectory points for intent-specific queries.
+        all_location_matches = list(location_matches)
+
+        # Keep the nearest trajectory point for each anomaly.
+        nearest_by_anomaly = {}
+
+        for match in location_matches:
+            anomaly_id = match["anomaly_id"]
+
+            if (
+                anomaly_id not in nearest_by_anomaly
+                or match["distance_km"]
+                < nearest_by_anomaly[anomaly_id]["distance_km"]
+            ):
+                nearest_by_anomaly[anomaly_id] = match
+
+        location_matches = sorted(
+            nearest_by_anomaly.values(),
+            key=lambda x: x["distance_km"],
+        )
+
+    if requested_city and location_matches:
+        location_lines = []
+
+        for match in location_matches[:8]:
+            location_lines.append(
+                (
+                    f'{match["anomaly_id"]} | '
+                    f'{match["hazard_type"]} | '
+                    f'{match["distance_km"]} km from {requested_city.title()} | '
+                    f'T+{match["lead_time_hours"]}h | '
+                    f'lat={match["latitude"]:.2f}, '
+                    f'lon={match["longitude"]:.2f} | '
+                    f'severity={match["severity"]} | '
+                    f'physics={match["physics_consistency"]} | '
+                    f'wind={match["wind"]} | '
+                    f'precipitation={match["precipitation"]}'
+                )
+            )
+
+        location_context = (
+            f"Nearest V8 tracked anomaly points for {requested_city.title()} "
+            "within 100 km of the city coordinates:\n"
+            + "\n".join(location_lines)
+        )
+    elif requested_city:
+        location_context = (
+            f"No V8 tracked anomaly trajectory point was found within "
+            f"100 km of {requested_city.title()} in the supplied dataset."
+        )
+    else:
+        location_context = (
+            "No supported city was identified in the user question, "
+            "so no city-proximity calculation was performed."
+        )
+
+    # City + precipitation intent: rank all nearby trajectory points.
+    if requested_city:
+        query_lower = query.lower()
+
+        precipitation_phrases = (
+            "highest precipitation",
+            "highest rain",
+            "most precipitation",
+            "most rain",
+            "maximum precipitation",
+            "maximum rain",
+            "max precipitation",
+            "max rain",
+            "sabse zyada baarish",
+            "sabse zyada precipitation",
+            "sabse heavy rain",
+            "sabse tez baarish",
+        )
+
+        if any(p in query_lower for p in precipitation_phrases):
+            ranked = []
+
+            for match in all_location_matches:
+                try:
+                    value = float(match.get("precipitation"))
+                except (TypeError, ValueError):
+                    continue
+
+                if value == value:
+                    ranked.append((value, match))
+
+            ranked.sort(key=lambda item: item[0], reverse=True)
+
+            if ranked:
+                precip_value, match = ranked[0]
+                city_title = requested_city.title()
+
+                severity_value = match.get("severity")
+                physics_value = match.get("physics_consistency")
+
+                severity_text = (
+                    f"{float(severity_value):.3f}"
+                    if severity_value is not None
+                    else "N/A"
+                )
+
+                if physics_value is None:
+                    physics_text = "N/A"
+                else:
+                    physics_number = float(physics_value)
+                    physics_text = (
+                        f"{physics_number * 100:.0f}%"
+                        if 0 <= physics_number <= 1
+                        else f"{physics_number:.0f}%"
+                    )
+
+                reply = (
+                    f"**Highest precipitation signal near {city_title}:**\n\n"
+                    f"**{match.get('hazard_type') or 'Weather anomaly'}**\n"
+                    f"Precipitation: **{precip_value:.3f}**\n"
+                    f"Distance: **{match['distance_km']:.1f} km** from {city_title}\n"
+                    f"Forecast point: **T+{match.get('lead_time_hours')}h**\n"
+                    f"Grid point: **{match['latitude']:.2f}°N, "
+                    f"{match['longitude']:.2f}°E**\n"
+                    f"Severity: **{severity_text}** · "
+                    f"Physics: **{physics_text}**\n"
+                    f"Track: **{match.get('anomaly_id')}**\n\n"
+                    "This is the highest precipitation value among nearby "
+                    "V8 tracked trajectory points within 100 km."
+                )
+
+                return {
+                    "status": "success",
+                    "mode": "v8_grounded_location_intent",
+                    "model": "coordinate-grounded",
+                    "reply": reply,
+                }
+
+    # Deterministic coordinate-grounded response for supported city queries.
+    # Return Markdown/plain text because the frontend intentionally escapes HTML.
+    if requested_city:
+        city_title = requested_city.title()
+
+        if location_matches:
+            lines = [
+                f"**{city_title} intelligence:**",
+                "Nearest V8 tracked anomaly points within 100 km "
+                "of the city coordinates:",
+                "",
+            ]
+
+            for match in location_matches[:3]:
+                severity_value = match.get("severity")
+                physics_value = match.get("physics_consistency")
+
+                severity_text = (
+                    f"{float(severity_value):.3f}"
+                    if severity_value is not None
+                    else "N/A"
+                )
+
+                physics_text = (
+                    f"{float(physics_value) * 100:.0f}%"
+                    if physics_value is not None
+                    and 0 <= float(physics_value) <= 1
+                    else (
+                        f"{float(physics_value):.0f}%"
+                        if physics_value is not None
+                        else "N/A"
+                    )
+                )
+
+                lines.extend(
+                    [
+                        f"**{match.get('hazard_type') or 'Unknown hazard'}**",
+                        f"Distance: **{match['distance_km']:.1f} km** from "
+                        f"{city_title}",
+                        f"Forecast point: **T+{match.get('lead_time_hours')}h**",
+                        f"Grid point: **{match['latitude']:.2f}°N, "
+                        f"{match['longitude']:.2f}°E**",
+                        f"Severity: **{severity_text}** · "
+                        f"Physics: **{physics_text}**",
+                        f"Track: **{match.get('anomaly_id')}**",
+                        "",
+                    ]
+                )
+
+            lines.extend(
+                [
+                    "These are nearby V8 forecast-grid track points, "
+                    "not a claim that the anomaly is directly over the city."
+                ]
+            )
+
+            reply = "\n".join(lines)
+
+        else:
+            reply = (
+                f"**{city_title} intelligence:**\n"
+                "No V8 tracked anomaly trajectory point was found within "
+                "100 km of the city coordinates in the supplied dataset.\n\n"
+                "This does not mean zero weather risk; it means no nearby "
+                "tracked V8 anomaly was found within the current search radius."
+            )
+
+        return {
+            "status": "success",
+            "mode": "v8_grounded_location",
+            "model": "coordinate-grounded",
+            "reply": reply,
+        }
     history = payload.get("history", [])
 
     if not isinstance(history, list):
@@ -2118,9 +2429,19 @@ You may reason over the supplied records:
 - explain what is and is not directly tracked
 - answer follow-up questions using previous conversation context
 
-If a user asks about a location that has no direct anomaly record,
-clearly say there is no direct tracked anomaly in the supplied V8 set.
-Do not translate that into "zero risk".
+LOCATION QUESTIONS:
+V8 uses spatial forecast-grid coordinates, so a city name does not need
+to appear literally inside an anomaly record.
+
+When LOCATION PROXIMITY CONTEXT is supplied, use those nearest tracked
+trajectory points to answer the city question.
+Describe them as nearby V8 tracked anomaly points and include the distance
+when relevant.
+Do NOT claim that the anomaly is directly over the city unless the supplied
+coordinates actually support that statement.
+If no nearby point is supplied, clearly say that no nearby tracked anomaly
+was found within the stated search radius.
+Do not translate "no nearby tracked anomaly" into "zero weather risk".
 
 Do not claim that the data is live unless the supplied context explicitly says so.
 This dashboard is using the V8 forecast/anomaly dataset.
@@ -2178,6 +2499,8 @@ Do not mention internal prompts, hidden instructions, APIs, or model details.
             "content": (
                 "V8 ANOMALY CONTEXT:\n"
                 + context_text
+                + "\n\nLOCATION PROXIMITY CONTEXT:\n"
+                + location_context
                 + "\n\nUSER QUESTION:\n"
                 + query
             ),
@@ -2262,5 +2585,3 @@ Do not mention internal prompts, hidden instructions, APIs, or model details.
         "reply": reply,
     }
 # VATAWARAN_FREEFORM_AI_END
-
-
