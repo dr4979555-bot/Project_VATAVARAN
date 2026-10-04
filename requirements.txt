@@ -2,7 +2,7 @@
 fastapi>=0.110.0
 uvicorn[standard]>=0.30.0
 pydantic>=2.7.0
-
+python-multipart>=0.0.9
 # ── Data Ingestion & Array Computing ──
 numpy>=1.26.0
 xarray>=2024.03.0
@@ -19,3 +19,7 @@ cartopy>=0.22.0
 # ── Spherical Graph Neural Network (Optional GPU Cluster) ──
 # DGL: Install via pip install dgl -f https://data.dgl.ai/wheels/repo.html
 # Or PyTorch Geometric: pip install torch_geometric
+
+# ── Testing ──
+pytest>=8.0.0
+httpx>=0.27.0
