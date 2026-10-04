@@ -71,6 +71,7 @@ data/interim/
 # Required V8 runtime artifacts
 !backend/models/
 !backend/models/vatavaran_gnn_v8_extreme_precip.pt
+!backend/models/vatavaran_v16_diffusion_downscaler.pt
 !backend/data/
 !backend/data/v8_extreme_precip_grid_forecasts_2025.npz
 !backend/data/v8_anomaly_tracking_2025.csv
