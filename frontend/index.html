@@ -3272,10 +3272,10 @@ const spoken=box.textContent.replace(/\s+/g," ").replace(/\bVATAWARAN\b/gi,"рд╡р
 if(!spoken)return;
 const voices=window.speechSynthesis.getVoices();
 let voice=null;
-const saved=localStorage.getItem("vatavaranVoiceURI");
+let saved=null; try{saved=localStorage.getItem("vatavaranVoiceURI");}catch(e){console.warn("[VATAWARAN] Voice storage unavailable.");}
 if(saved)voice=voices.find(v=>v.voiceURI===saved)||null;
 if(!voice)voice=voices.find(v=>/^hi-IN$/i.test(v.lang)&&/female|heera|kalpana|swara|aarti|veena|priya|neerja/i.test(v.name||""))||voices.find(v=>/^hi-IN$/i.test(v.lang))||voices.find(v=>/^en-IN$/i.test(v.lang))||voices[0]||null;
-if(voice)localStorage.setItem("vatavaranVoiceURI",voice.voiceURI);
+if(voice){try{localStorage.setItem("vatavaranVoiceURI",voice.voiceURI);}catch(e){console.warn("[VATAWARAN] Voice preference could not be saved.");}}
 window.speechSynthesis.cancel();
 const u=new SpeechSynthesisUtterance(spoken);
 u.voice=voice||null;
