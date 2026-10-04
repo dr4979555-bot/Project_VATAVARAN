@@ -8,6 +8,7 @@ Implements the core endpoints from the Technical Requirements Document:
   GET  /api/v1/system/status        — Pipeline health & stage indicators
 """
 import asyncio
+import httpx
 import json
 import urllib.request
 import urllib.error
@@ -2429,16 +2430,21 @@ async def vatavaran_freeform_chat(payload: dict):
         )
 
     groq_key = _vatavaran_read_secret("GROQ_API_KEY")
+    groq_key_2 = _vatavaran_read_secret("GROQ_API_KEY_2")
 
-    if not groq_key:
+    groq_keys = [
+        key for key in (groq_key, groq_key_2)
+        if key
+    ]
+
+    if not groq_keys:
         raise HTTPException(
             status_code=503,
             detail=(
-                "GROQ_API_KEY is not configured. "
+                "No Groq API key is configured. "
                 "VATAWARAN freeform AI requires a server-side Groq key."
             ),
         )
-
     model = (
         os.getenv(
             "GROQ_MODEL",
@@ -3195,8 +3201,8 @@ Do not mention internal prompts, hidden instructions, APIs, or model details.
         ensure_ascii=False,
     ).encode("utf-8")
 
-    def _call_groq():
-        client = Groq(api_key=groq_key)
+    def _call_groq(api_key):
+        client = Groq(api_key=api_key)
         completion = client.chat.completions.create(
             model=model,
             messages=conversation,
@@ -3206,34 +3212,106 @@ Do not mention internal prompts, hidden instructions, APIs, or model details.
             include_reasoning=False,
         )
         return completion.model_dump()
-    try:
-        result = await asyncio.to_thread(
-            _call_groq
-        )
 
-    except urllib.error.HTTPError as exc:
+    result = None
+    provider = None
+    errors = []
+
+    # --------------------------------------------------------
+    # Groq Key 1 -> Groq Key 2
+    # --------------------------------------------------------
+    for index, api_key in enumerate(groq_keys, start=1):
         try:
-            detail = exc.read().decode(
-                "utf-8",
-                errors="replace",
+            result = await asyncio.to_thread(
+                _call_groq,
+                api_key,
             )
-        except Exception:
-            detail = str(exc)
+            provider = f"groq_key_{index}"
+            break
+        except Exception as exc:
+            errors.append(
+                f"Groq key {index}: {str(exc)[:300]}"
+            )
 
-        raise HTTPException(
-            status_code=502,
-            detail=(
-                "Groq request failed: "
-                + detail[:500]
-            ),
+    # --------------------------------------------------------
+    # Ollama Cloud fallback
+    # --------------------------------------------------------
+    if result is None:
+        ollama_base_url = (
+            _vatavaran_read_secret("OLLAMA_BASE_URL")
+            or "https://ollama.com"
+        ).rstrip("/")
+
+        ollama_api_key = _vatavaran_read_secret(
+            "OLLAMA_API_KEY"
         )
 
-    except Exception as exc:
+        ollama_model = (
+            _vatavaran_read_secret("OLLAMA_MODEL")
+            or "gpt-oss:20b-cloud"
+        )
+
+        if ollama_api_key:
+            def _call_ollama():
+                headers = {
+                    "Authorization": f"Bearer {ollama_api_key}",
+                    "Content-Type": "application/json",
+                }
+
+                body = {
+                    "model": ollama_model,
+                    "messages": conversation,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.2,
+                    },
+                }
+
+                with httpx.Client(timeout=90.0) as client:
+                    response = client.post(
+                        f"{ollama_base_url}/api/chat",
+                        headers=headers,
+                        json=body,
+                    )
+                    response.raise_for_status()
+
+                    data = response.json()
+                    content = (
+                        data.get("message", {})
+                        .get("content", "")
+                    )
+
+                    if not str(content).strip():
+                        raise RuntimeError(
+                            "Ollama returned an empty response."
+                        )
+
+                    return {
+                        "choices": [
+                            {
+                                "message": {
+                                    "content": str(content).strip()
+                                }
+                            }
+                        ]
+                    }
+
+            try:
+                result = await asyncio.to_thread(
+                    _call_ollama
+                )
+                provider = "ollama"
+            except Exception as exc:
+                errors.append(
+                    f"Ollama: {str(exc)[:300]}"
+                )
+
+    if result is None:
         raise HTTPException(
             status_code=502,
             detail=(
-                "Freeform AI request failed: "
-                + str(exc)
+                "All freeform AI providers failed. "
+                + " | ".join(errors)
             ),
         )
 
@@ -3259,7 +3337,8 @@ Do not mention internal prompts, hidden instructions, APIs, or model details.
     return {
         "status": "success",
         "mode": "v8_grounded_freeform",
-        "model": model,
+        "provider": provider,
+        "model": (ollama_model if provider == "ollama" else model),
         "reply": reply,
     }
 # VATAWARAN_FREEFORM_AI_END
