@@ -6,10 +6,12 @@ groq>=1.7.0
 python-multipart>=0.0.9
 # ── Data Ingestion & Array Computing ──
 numpy>=1.26.0
+pandas>=2.0.0
 xarray>=2024.03.0
 netCDF4>=1.7.0
 h5netcdf>=1.4.0
 requests>=2.31.0
+joblib>=1.3.0
 
 # ── Production ML & Geospatial Dependencies ──
 torch>=2.3.0
