@@ -121,3 +121,9 @@ backend/v14_*
 backend/v15_*
 
 backend/v8_raw_*.csv
+
+backend/main.py.backup.*
+
+backend/uvicorn_*.log
+
+frontend/index.html.backup.*

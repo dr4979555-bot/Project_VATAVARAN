@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="VATAWARAN — AI-Driven Spatio-Temporal Extreme Weather Tracking & Downscaling Engine. Smart India Hackathon 2026, Problem Statement #26078.">
-  <title>VATAWARAN · Meteorological Intelligence Bulletin</title>
+  <meta name="description" content="VATAWARAN — AI-Driven Spatio-Temporal Extreme Weather Intelligence Engine. Smart India Hackathon 2026, Problem Statement #26078.">
+  <title>VATAWARAN · Extreme Weather Intelligence Bulletin</title>
 
   <!-- ── Fonts ─────────────────────────────────────────────────── -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -407,7 +407,7 @@
 
     .card-emoji { font-size: 16px; line-height: 1; }
 
-    /* EFI Score — large & bold, right-aligned */
+    /* Severity — large & bold, right-aligned */
     .efi-block {
       display: flex;
       flex-direction: column;
@@ -1375,7 +1375,45 @@
     .station-marker:hover {
       transform: scale(1.15);
     }
-  </style>
+  
+
+
+
+
+
+/* VATAWARAN DRAGGABLE ASSISTANT */
+#ava-panel #ava-head{
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
+}
+
+#ava-panel.ava-dragging #ava-head{
+  cursor:grabbing;
+}
+
+#ava-panel.ava-dragging{
+  user-select:none;
+}
+/* VATAWARAN MOVABLE ASSISTANT BUTTON */
+#ava-toggle{
+  touch-action:none;
+  user-select:none;
+  cursor:grab;
+}
+
+#ava-toggle.ava-toggle-dragging{
+  cursor:grabbing;
+}
+/* VATAWARAN RESIZABLE ASSISTANT */
+#ava-panel{
+  resize:both;
+  min-width:280px;
+  min-height:260px;
+  max-width:calc(100vw - 16px);
+  max-height:calc(100vh - 40px);
+}
+</style>
 </head>
 <body>
 
@@ -1385,14 +1423,27 @@
 <header>
   <div class="hdr-dateline">
     <span class="dateline-left" id="cycle-badge">Vol. I &nbsp;·&nbsp; 00Z Forecast Cycle</span>
-    <span class="dateline-center">⬡ NCMRWF · NEPS-G Ensemble · 12 km Resolution ⬡</span>
+    <span class="dateline-center">⬡ VATAWARAN V8 · V8 GNN Forecast Grid · 1° Spatial Grid Resolution ⬡</span>
     <span class="dateline-right">Smart India Hackathon 2026 &nbsp;·&nbsp; PS #26078</span>
   </div>
   <div class="hdr-masthead">
     <div class="masthead-left">
       <p class="masthead-kicker">AI-Driven Spatio-Temporal Extreme Weather Intelligence</p>
       <h1 class="masthead-title">VATAWARAN</h1>
-      <p class="masthead-subtitle">Meteorological Downscaling &amp; Anomaly Tracking Bulletin</p>
+<div class="vatawaran-full-form" style="
+  display:block;
+  margin-top:10px;
+  margin-bottom:16px;
+  padding:0 2px;
+  font-size:10px;
+  line-height:1.6;
+  letter-spacing:0.045em;
+  text-transform:uppercase;
+  opacity:0.65;
+">
+  Visual Analytics for Tracking Atmospheric Weather Anomalies and Risks
+</div>
+      <p class="masthead-subtitle">AI-Driven Spatio-Temporal Extreme Weather Intelligence</p>
     </div>
 
     <div class="masthead-ornament" aria-hidden="true">
@@ -1409,8 +1460,7 @@
       </div>
       <span class="cycle-text" id="gpu-badge">GPU: —</span>
       <div class="hdr-tags">
-        <span class="hdr-tag gpu">NCMRWF · Stage 1–2</span>
-        <span class="hdr-tag sih">SIH '26 · #26078</span>
+        <span class="hdr-tag gpu">VATAWARAN V8 · Stage 1–2 · SIH '26 · #26078</span>
       </div>
     </div>
   </div>
@@ -1421,16 +1471,16 @@
 ═══════════════════════════════════════════════════════════════════ -->
 <section class="gov-ribbon" aria-label="National Weather & Disaster Feeds">
   <div class="gov-ribbon-label">
-    <span>🏛️ Gov Feeds:</span>
+    <span>🏛️ Government Feed Interfaces:</span>
   </div>
   <div class="gov-pill interactive" onclick="vat.showGovSourcesModal()" title="View all upstream and downstream Government API statuses">
     <span class="gov-pill-dot"></span>
-    <span>NCMRWF NEPS-G (12 km)</span>
+    <span>VATAWARAN V8 GNN Forecast Grid</span>
     <span class="pill-tag">SYNCED</span>
   </div>
-  <div class="gov-pill interactive" onclick="vat.showGovSourcesModal()" title="40-year IMDAA Baseline (1979-2020)">
+  <div class="gov-pill interactive" onclick="vat.showGovSourcesModal()" title="40-year Reference Baseline (1979-2020)">
     <span class="gov-pill-dot"></span>
-    <span>IMDAA Baseline</span>
+    <span>Reference Baseline</span>
     <span class="pill-tag">ONLINE</span>
   </div>
   <div class="gov-pill interactive live" onclick="vat.toggleImdLayer()" id="pill-imd" title="Toggle ground telemetry from IMD Automated Weather Stations (AWS)">
@@ -1443,9 +1493,9 @@
     <span>ISRO MOSDAC (INSAT-3DR)</span>
     <span class="pill-tag">ONLINE</span>
   </div>
-  <div class="gov-pill interactive alert" onclick="vat.viewCap()" title="National Disaster Management Authority (NDMA) Sachet CAP v1.2 Gateway">
+  <div class="gov-pill interactive alert" onclick="vat.viewCap()" title="CAP / Sachet alert integration interface">
     <span class="gov-pill-dot"></span>
-    <span>NDMA Sachet (CAP v1.2)</span>
+    <span>CAP / Sachet integration interface</span>
     <span class="pill-tag ready">READY</span>
   </div>
 </section>
@@ -1477,11 +1527,11 @@
       <div class="diff-ticker">
         <div class="diff-ticker-top">
           <span class="diff-ticker-icon">⚙</span>
-          <span class="diff-ticker-hed">Stage II · Diffusion Downscaling</span>
+          <span class="diff-ticker-hed">Stage II · V8 Forecast Grid</span>
         </div>
         <div class="diff-counter-wrap">
           <div class="diff-counter" id="diff-step">00</div>
-          <div class="diff-counter-den">of 50 DDIM Denoising Steps</div>
+          <div class="diff-counter-den">V8 Forecast Processing Stages</div>
         </div>
         <div class="diff-bar-segs" id="diff-segs">
           <!-- 20 segments, JS fills them -->
@@ -1495,7 +1545,7 @@
       <p class="legend-hed">Anomaly Classification</p>
       <div class="legend-row">
         <span class="legend-swatch cyclone"></span>
-        <span class="legend-legend-text">Tropical Cyclone</span>
+        <span class="legend-legend-text">High Wind</span>
       </div>
       <div class="legend-row">
         <span class="legend-swatch heat"></span>
@@ -1507,7 +1557,7 @@
       </div>
       <div class="legend-row divider">
         <span class="legend-swatch ds"></span>
-        <span class="legend-legend-text">5 km Downscaled Field</span>
+        <span class="legend-legend-text">900-Cell Forecast Field</span>
       </div>
     </aside>
 
@@ -1520,10 +1570,10 @@
         <span class="pipe-step-dot"></span>II. GNN Track
       </div>
       <div class="pipe-step completed" id="pipe-3">
-        <span class="pipe-step-dot"></span>III. Crop
+        <span class="pipe-step-dot"></span>III. Anomaly Tracking
       </div>
       <div class="pipe-step idle" id="pipe-4">
-        <span class="pipe-step-dot"></span>IV. Diffusion
+        <span class="pipe-step-dot"></span>IV. Physics Check
       </div>
       <div class="pipe-step idle" id="pipe-5">
         <span class="pipe-step-dot"></span>V. Alert
@@ -1569,9 +1619,12 @@
   'use strict';
 
   /* ── Config ───────────────────────────────────────────────── */
-  const API = window.location.origin.includes('file://')
-    ? 'http://localhost:8000'
-    : window.location.origin;
+  const API =
+    (window.location.hostname === 'localhost' ||
+     window.location.hostname === '127.0.0.1' ||
+     window.location.protocol === 'file:')
+      ? 'http://127.0.0.1:8000'
+      : window.location.origin;
 
   const COLORS = {
     TROPICAL_CYCLONE:      '#8b1a1a',
@@ -1604,7 +1657,7 @@
   }
 
   /* ── Map Init ─────────────────────────────────────────────── */
-  const map = new maplibregl.Map({
+  let map = new maplibregl.Map({
     container: 'map',
     style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
     center: [80, 20],
@@ -1612,7 +1665,81 @@
     attributionControl: false,
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
-  map.on('load', () => { fetchStatus(); fetchTracks(); fetchImdStations(); });
+  /* ── VATAVARAN Primary Forecast Boot ─────────────────────── */
+  let __vatavaranForecastStarted = false;
+
+  async function __startVatavaranForecast() {
+
+    if (__vatavaranForecastStarted) {
+      return;
+    }
+
+    __vatavaranForecastStarted = true;
+
+    console.log(
+      '[VATAVARAN] Primary forecast boot started'
+    );
+
+    try {
+      await fetchStatus();
+
+      console.log(
+        '[VATAVARAN] Primary status: PASS'
+      );
+    } catch (err) {
+      console.warn(
+        '[VATAVARAN] Status boot failed:',
+        err
+      );
+    }
+
+    try {
+      await fetchTracks();
+
+      console.log(
+        '[VATAVARAN] Primary tracks: PASS'
+      );
+    } catch (err) {
+      console.error(
+        '[VATAVARAN] Primary tracks failed:',
+        err
+      );
+    }
+
+    try {
+      await fetchImdStations();
+
+      console.log(
+        '[VATAVARAN] Primary stations: PASS'
+      );
+    } catch (err) {
+      console.warn(
+        '[VATAVARAN] Station boot failed:',
+        err
+      );
+    }
+  }
+
+  /*
+   * MapLibre is already the native initialization point.
+   * Calling the forecast pipeline here keeps everything
+   * in the same script scope.
+   */
+  map.on('load', () => {
+    __startVatavaranForecast();
+  });
+
+  /*
+   * Small fallback only if MapLibre load is delayed.
+   * It does NOT create another map.
+   */
+  setTimeout(() => {
+    __startVatavaranForecast();
+  }, 2500);
+
+    map.on('load', () => {
+      fetchImdStations();
+    });
 
   /* ── System Status ────────────────────────────────────────── */
   async function fetchStatus() {
@@ -1624,35 +1751,159 @@
       const cyc = d.forecast_cycle.replace('T', ' ').replace('Z', '') + ' UTC';
       document.getElementById('cycle-badge').textContent = 'Vol. I · Cycle: ' + cyc;
       document.getElementById('gpu-badge').textContent =
-        'GPU: ' + (d.gpu_available ? d.gpu_name : 'CPU Fallback');
+        'Inference: Local V8 Runtime';
       d.pipeline_stages.forEach(s => {
         const el = document.getElementById('pipe-' + s.stage);
         if (el) el.className = 'pipe-step ' + s.status;
       });
     } catch {
       document.getElementById('cycle-badge').textContent = 'Vol. I · Cycle: 2026-09-30 00:00 UTC';
-      document.getElementById('gpu-badge').textContent = 'GPU: NVIDIA A10G';
+      document.getElementById('gpu-badge').textContent = 'GPU: Local CPU';
     }
   }
 
   /* ── Fetch Tracks ─────────────────────────────────────────── */
-  async function fetchTracks() {
+      async function fetchTracks() {
+    console.log('[VATAVARAN] fetchTracks() started');
+
+    const countEl =
+      document.getElementById(
+        'anomaly-count-line'
+      );
+
     try {
-      const r = await fetch(`${API}/api/v1/forecast/track?lead_time_min=48&lead_time_max=240&min_efi=0.80`);
-      const d = await r.json();
-      anomalies = d.data || [];
-    } catch {
-      console.warn('API offline — fallback data active');
-      anomalies = FALLBACK;
+      const response = await fetch(
+        `${API}/api/v1/forecast/track?lead_time_min=48&lead_time_max=240&min_efi=0.80`,
+        {
+          cache: 'no-store'
+        }
+      );
+
+      console.log(
+        '[VATAVARAN] track HTTP:',
+        response.status
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Forecast API HTTP ${response.status}`
+        );
+      }
+
+      const data =
+        await response.json();
+
+      console.log(
+        '[VATAVARAN] track payload:',
+        data
+      );
+
+      if (
+        !data ||
+        !Array.isArray(data.data)
+      ) {
+        throw new Error(
+          'Forecast API returned invalid data'
+        );
+      }
+
+      anomalies = data.data;
+
+      const n = anomalies.length;
+
+      if (countEl) {
+        countEl.textContent =
+          `${n} anomal${n === 1 ? 'y' : 'ies'} detected — V8 tracking cycle`;
+      }
+
+      /*
+       * IMPORTANT:
+       * Render cards independently of MapLibre.
+       * Therefore a map failure cannot stop the bulletin.
+       */
+      try {
+        buildCards();
+        console.log(
+          '[VATAVARAN] Cards rendered:',
+          n
+        );
+      } catch (cardErr) {
+        console.error(
+          '[VATAVARAN] Card rendering failed:',
+          cardErr
+        );
+
+        if (countEl) {
+          countEl.textContent =
+            `Track data loaded (${n}) — card rendering error`;
+        }
+      }
+
+      /*
+       * Map rendering is optional.
+       * It runs only after the map object exists.
+       */
+      try {
+        if (
+          typeof map !== 'undefined' &&
+          map
+        ) {
+          if (
+            typeof map.isStyleLoaded === 'function' &&
+            map.isStyleLoaded()
+          ) {
+            buildMapLayers();
+
+            console.log(
+              '[VATAVARAN] Map layers rendered.'
+            );
+          } else if (
+            typeof map.once === 'function'
+          ) {
+            map.once(
+              'load',
+              () => {
+                try {
+                  buildMapLayers();
+
+                  console.log(
+                    '[VATAVARAN] Map layers rendered after load.'
+                  );
+                } catch (mapErr) {
+                  console.error(
+                    '[VATAVARAN] Map layer rendering failed:',
+                    mapErr
+                  );
+                }
+              }
+            );
+          }
+        }
+      } catch (mapErr) {
+        console.error(
+          '[VATAVARAN] Map initialization skipped:',
+          mapErr
+        );
+      }
+
+      return anomalies;
+
+    } catch (err) {
+      console.error(
+        '[VATAVARAN] Track fetch failed:',
+        err
+      );
+
+      if (countEl) {
+        countEl.textContent =
+          `Forecast data error: ${err.message || err}`;
+      }
+
+      return [];
     }
-    const n = anomalies.length;
-    document.getElementById('anomaly-count-line').textContent =
-      `${n} anomal${n === 1 ? 'y' : 'ies'} detected — 00Z forecast cycle`;
-    buildCards();
-    buildMapLayers();
   }
 
-  /* ── Build Cards ──────────────────────────────────────────── */
+/* ── Build Cards ──────────────────────────────────────────── */
   function buildCards() {
     const list = document.getElementById('anomaly-list');
     list.innerHTML = '';
@@ -1683,14 +1934,14 @@
           </div>
           <div class="efi-block">
             <span class="efi-number">${a.peak_efi.toFixed(2)}</span>
-            <span class="efi-label">EFI</span>
+            <span class="efi-label">Severity</span>
           </div>
         </div>
         <p class="card-id">${a.anomaly_id}</p>
         <p class="card-desc">${a.description}</p>
         <div class="card-metrics-row">
           <div class="c-metric">
-            <p class="c-metric-label">Confidence</p>
+            <p class="c-metric-label">Physics Consistency</p>
             <p class="c-metric-value">${confPct}%</p>
           </div>
           <div class="c-metric">
@@ -1711,7 +1962,7 @@
           <button class="c-btn c-btn-filled"
             id="btn-ds-${a.anomaly_id}"
             onclick="event.stopPropagation(); window.vat.downscale('${a.anomaly_id}')">
-            ⚡ Downscale
+            ◈ Local Forecast
           </button>
         </div>
       `;
@@ -1781,7 +2032,7 @@
           .setHTML(`
             <p class="popup-hed">${a.anomaly_id}</p>
             <div class="popup-row"><span class="popup-key">Lead Time</span><span class="popup-val">T+${p.lead}h</span></div>
-            <div class="popup-row"><span class="popup-key">EFI Score</span><span class="popup-val">${parseFloat(p.efi).toFixed(2)}</span></div>
+            <div class="popup-row"><span class="popup-key">Severity</span><span class="popup-val">${parseFloat(p.efi).toFixed(2)}</span></div>
             <div class="popup-row"><span class="popup-key">Hazard</span><span class="popup-val">${a.hazard_type.replace(/_/g,' ')}</span></div>
           `)
           .addTo(map);
@@ -1820,9 +2071,9 @@
 
     document.getElementById('detail-content').innerHTML = `
       <div class="dp-masthead">
-        <p class="dp-masthead-eyebrow">Anomaly Dossier · Classified Bulletin</p>
+        <p class="dp-masthead-eyebrow">V8 Anomaly Dossier · Forecast Intelligence Bulletin</p>
         <p class="dp-anomaly-id">${ICONS[a.hazard_type] || '⚠️'} ${a.anomaly_id}</p>
-        <p class="dp-hazard-line">${a.hazard_type.replace(/_/g,' ')} &nbsp;·&nbsp; EFI ${a.peak_efi.toFixed(2)} &nbsp;·&nbsp; ${Math.round(a.confidence_score*100)}% confidence</p>
+        <p class="dp-hazard-line">${a.hazard_type.replace(/_/g,' ')} &nbsp;·&nbsp; Severity ${a.peak_efi.toFixed(2)} &nbsp;·&nbsp; ${Math.round(a.confidence_score*100)}% physics consistency</p>
       </div>
 
       <div class="d-section" style="animation-delay:0s">
@@ -1837,11 +2088,11 @@
       <div class="d-section" style="animation-delay:0.05s">
         <div class="d-hed">
           <div class="d-hed-line"></div>
-          <span class="d-hed-label">Predicted Trajectory</span>
+          <span class="d-hed-label">Predicted Anomaly Trajectory</span>
           <div class="d-hed-line"></div>
         </div>
         <table class="traj-table">
-          <thead><tr><th>Lead</th><th>Centroid</th><th>EFI</th></tr></thead>
+          <thead><tr><th>Lead</th><th>Centroid</th><th>Severity</th></tr></thead>
           <tbody>${trajRows}</tbody>
         </table>
       </div>
@@ -1849,21 +2100,21 @@
       <div class="d-section" style="animation-delay:0.08s">
         <div class="d-hed">
           <div class="d-hed-line"></div>
-          <span class="d-hed-label">Government Ingestion &amp; Dissemination</span>
+          <span class="d-hed-label">Forecast Provenance &amp; Alert Integration</span>
           <div class="d-hed-line"></div>
         </div>
         <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mid); display:flex; flex-direction:column; gap:5px; margin-top:6px; background:var(--paper-2); padding:8px; border:1px solid var(--rule-light);">
           <div style="display:flex; justify-content:space-between;">
-            <span>Upstream NWP Model:</span>
-            <strong style="color:var(--navy-2);">NCMRWF NEPS-G (12 km)</strong>
+            <span>Forecast Model:</span>
+            <strong style="color:var(--navy-2);">VATAWARAN V8 GNN Forecast Grid</strong>
           </div>
           <div style="display:flex; justify-content:space-between;">
-            <span>Climatological Base:</span>
-            <span>IMDAA 12 km (1979–2020)</span>
+            <span>Forecast Basis:</span>
+            <span>V8 learned spatio-temporal forecast representation</span>
           </div>
           <div style="display:flex; justify-content:space-between;">
-            <span>Dissemination Format:</span>
-            <span style="color:var(--red); font-weight:700;">NDMA Sachet (CAP v1.2)</span>
+            <span>Alert Integration:</span>
+            <span style="color:var(--red); font-weight:700;">CAP / Sachet integration interface</span>
           </div>
         </div>
         <div style="display:flex; gap:6px; margin-top:8px;">
@@ -1871,7 +2122,7 @@
             📥 Export CAP XML
           </button>
           <button class="cap-action-btn view" onclick="vat.viewCap('${a.anomaly_id}')" title="Inspect NDMA Sachet JSON payload">
-            📋 View Sachet JSON
+            📋 View Alert JSON
           </button>
         </div>
       </div>
@@ -1882,69 +2133,248 @@
 
   /* ── Downscale HTML ───────────────────────────────────────── */
   function buildDsHtml(result) {
-    const m     = result.metadata || {};
-    const alert = result.features?.[0];
-    const props = alert?.properties || {};
-    const mets  = props.metrics || {};
-    const qaOk  = m.physics_qa_passed;
-    const sev   = (props.severity_level || '').toLowerCase();
 
-    return `
-      <div class="d-hed">
-        <div class="d-hed-line"></div>
-        <span class="d-hed-label">Downscale Output · 5 km Grid</span>
-        <div class="d-hed-line"></div>
-      </div>
-      <div class="stamp-row">
-        <span class="sev-stamp ${sev}">${props.severity_level || '—'}</span>
-        <span class="qa-stamp ${qaOk ? 'pass' : 'fail'}">${qaOk ? '✓ QA Pass' : '✗ QA Fail'}</span>
-      </div>
-      <div class="ds-grid">
-        <div class="ds-box">
-          <p class="ds-box-label">Peak Precip P99</p>
-          <p class="ds-box-value">${Math.round(mets.peak_precipitation_p99_mm || 0)}<span class="ds-box-unit">mm</span></p>
-        </div>
-        <div class="ds-box">
-          <p class="ds-box-label">Peak Precip P90</p>
-          <p class="ds-box-value">${Math.round(mets.peak_precipitation_p90_mm || 0)}<span class="ds-box-unit">mm</span></p>
-        </div>
-        <div class="ds-box">
-          <p class="ds-box-label">Wind Gust</p>
-          <p class="ds-box-value">${Math.round(mets.peak_wind_gust_kmh || 0)}<span class="ds-box-unit">km/h</span></p>
-        </div>
-        <div class="ds-box">
-          <p class="ds-box-label">Resolution</p>
-          <p class="ds-box-value">${m.resolution_km || 5}<span class="ds-box-unit">km</span></p>
-        </div>
-      </div>
-      <div class="residuals-row">
-        <div class="residual-cell"><span>Scheduler</span>${m.scheduler || 'DDIM'}</div>
-        <div class="residual-cell"><span>Steps</span>${m.diffusion_steps || 50}</div>
-        <div class="residual-cell"><span>Mass Δ</span>${(m.physics_residuals?.mass_divergence || 0).toFixed(4)}</div>
-        <div class="residual-cell"><span>Moist Δ</span>${(m.physics_residuals?.moisture_flux || 0).toFixed(4)}</div>
-      </div>
-      <div class="advisory-notice">
-        <p class="advisory-hed">⚠ Operational Advisory</p>
-        <p class="advisory-body">${props.advisory || ''}</p>
+  const m =
+    result?.metadata || {};
+
+  const features =
+    Array.isArray(result?.features)
+      ? result.features
+      : [];
+
+  const alert =
+    features[0] || {};
+
+  const props =
+    alert.properties || {};
+
+  const grid =
+    features.slice(1);
+
+  const cellCount =
+    grid.length;
+
+  /*
+   * This output is a V8 local forecast-field crop.
+   * It is NOT a 5 km diffusion/downscaling product.
+   */
+
+  const severity =
+    props.severity_level || '—';
+
+  const hazard =
+    props.hazard_type ||
+    props.hazard ||
+    '';
+
+  const temperatures =
+    grid
+      .map(f => Number(f?.properties?.temperature_c))
+      .filter(Number.isFinite);
+
+  const winds =
+    grid
+      .map(f => Number(f?.properties?.wind_speed_kmh))
+      .filter(Number.isFinite);
+
+  const precipitation =
+    grid
+      .map(f => Number(f?.properties?.precip_p90_mm))
+      .filter(Number.isFinite);
+
+  const maxTemp =
+    temperatures.length
+      ? Math.max(...temperatures)
+      : null;
+
+  const maxWind =
+    winds.length
+      ? Math.max(...winds)
+      : null;
+
+  const maxPrecip =
+    precipitation.length
+      ? Math.max(...precipitation)
+      : null;
+
+  const physics =
+    Number(
+      m.physics_consistency ??
+      props.physics_consistency ??
+      0
+    );
+
+  const physicsPct =
+    Number.isFinite(physics)
+      ? Math.round(
+          (physics > 1 ? physics / 100 : physics) * 100
+        )
+      : null;
+
+  const fieldReady =
+    cellCount > 0;
+
+  return `
+    <div class="d-hed">
+      <div class="d-hed-line"></div>
+      <span class="d-hed-label">
+        Local Forecast Output · V8 Grid Crop
+      </span>
+      <div class="d-hed-line"></div>
+    </div>
+
+    <div class="stamp-row">
+      <span class="sev-stamp">
+        ${severity}
+      </span>
+
+      <span class="qa-stamp ${fieldReady ? 'pass' : 'fail'}">
+        ${fieldReady
+          ? '✓ V8 Field Ready'
+          : '✗ V8 Field Unavailable'}
+      </span>
+    </div>
+
+    <div class="ds-grid">
+
+      <div class="ds-box">
+        <p class="ds-box-label">
+          Maximum Temperature
+        </p>
+
+        <p class="ds-box-value">
+          ${maxTemp !== null
+            ? maxTemp.toFixed(1)
+            : '—'}
+
+          <span class="ds-box-unit">
+            °C
+          </span>
+        </p>
       </div>
 
-      <div class="cap-dispatch-card">
-        <div class="cap-hed">
-          <span style="font-size:12px;">🚨</span>
-          <span>NDMA Sachet · CAP v1.2 Dispatch</span>
-        </div>
-        <p class="cap-desc">Standardized ITU-T X.1303 Civil Protection Alert generated for NDRF &amp; State Emergency Operations with 5 km impact radius.</p>
-        <div class="cap-btn-row">
-          <button class="cap-action-btn export" onclick="vat.exportCap('${m.anomaly_id || selectedId}')">
-            📥 Download CAP XML
-          </button>
-          <button class="cap-action-btn view" onclick="vat.viewCap('${m.anomaly_id || selectedId}')">
-            📋 View Sachet JSON
-          </button>
-        </div>
+      <div class="ds-box">
+        <p class="ds-box-label">
+          Maximum Wind
+        </p>
+
+        <p class="ds-box-value">
+          ${maxWind !== null
+            ? maxWind.toFixed(1)
+            : '—'}
+
+          <span class="ds-box-unit">
+            km/h
+          </span>
+        </p>
       </div>
-    `;
-  }
+
+      <div class="ds-box">
+        <p class="ds-box-label">
+          Maximum Precipitation
+        </p>
+
+        <p class="ds-box-value">
+          ${maxPrecip !== null
+            ? maxPrecip.toFixed(2)
+            : '—'}
+
+          <span class="ds-box-unit">
+            mm
+          </span>
+        </p>
+      </div>
+
+      <div class="ds-box">
+        <p class="ds-box-label">
+          Grid Cells
+        </p>
+
+        <p class="ds-box-value">
+          ${cellCount}
+
+          <span class="ds-box-unit">
+            cells
+          </span>
+        </p>
+      </div>
+
+    </div>
+
+    <div class="residuals-row">
+
+      <div class="residual-cell">
+        <span>Field</span>
+        V8 Forecast
+      </div>
+
+      <div class="residual-cell">
+        <span>Grid</span>
+        1° Spatial
+      </div>
+
+      <div class="residual-cell">
+        <span>Physics</span>
+        ${physicsPct !== null
+          ? physicsPct + '%'
+          : '—'}
+      </div>
+
+      <div class="residual-cell">
+        <span>Cells</span>
+        ${cellCount}
+      </div>
+
+    </div>
+
+    <div class="advisory-notice">
+      <p class="advisory-hed">
+        ⚠ Forecast Interpretation
+      </p>
+
+      <p class="advisory-body">
+        ${
+          props.advisory ||
+          'VATAWARAN V8 local forecast field extracted from the medium-range spatio-temporal forecast grid.'
+        }
+      </p>
+    </div>
+
+    <div class="cap-dispatch-card">
+
+      <div class="cap-hed">
+        <span style="font-size:12px;">🚨</span>
+        <span>
+          CAP / Sachet Alert Interface
+        </span>
+      </div>
+
+      <p class="cap-desc">
+        Structured alert-export interface for downstream emergency-management workflows.
+      </p>
+
+      <div class="cap-btn-row">
+
+        <button
+          class="cap-action-btn export"
+          onclick="vat.exportCap('${m.anomaly_id || selectedId}')"
+        >
+          📥 Export CAP XML
+        </button>
+
+        <button
+          class="cap-action-btn view"
+          onclick="vat.viewCap('${m.anomaly_id || selectedId}')"
+        >
+          📋 View Alert JSON
+        </button>
+
+      </div>
+
+    </div>
+  `;
+}
+
 
   /* ── Fly To ───────────────────────────────────────────────── */
   function flyTo(id) {
@@ -1963,7 +2393,7 @@
     selectAnomaly(id);
   }
 
-  /* ── Downscale ────────────────────────────────────────────── */
+  /* ── Local V8 Forecast Field ──────────────────────────────── */
   async function downscale(id) {
     const screen = document.getElementById('diffusion-screen');
     const stepEl = document.getElementById('diff-step');
@@ -1971,76 +2401,159 @@
     const btn    = document.getElementById(`btn-ds-${id}`);
 
     if (btn) btn.disabled = true;
-    document.getElementById('pipe-4').className = 'pipe-step running';
+
     screen.classList.add('active');
 
-    const substeps = [
-      'Initializing noise tensor',
-      'Loading 12 km conditioning grid',
-      'Encoding SRTM DEM and land-sea mask',
-      'Cross-attention feature injection',
-      'DDIM reverse denoising [01–10]',
-      'Mass divergence kernel applied',
-      'Moisture flux convergence constraint',
-      'DDIM reverse denoising [11–25]',
-      'Gradient amplitude preservation',
-      'DDIM reverse denoising [26–40]',
-      'DDIM reverse denoising [41–50]',
-      'Physics QA validation check',
-      'Computing P50/P90/P99 quantiles',
-      'Max-amplitude centroid extraction',
-      'Generating GeoJSON alert payload',
+    const steps = [
+      'Loading V8 forecast artifact',
+      'Locating anomaly snapshot',
+      'Selecting requested lead time',
+      'Cropping local forecast field',
+      'Reading temperature / rainfall / wind',
+      'Checking physics-consistency metadata',
+      'Building GeoJSON field',
+      'Rendering local forecast field',
     ];
 
-    const TOTAL = 50;
+    const TOTAL = steps.length;
+
     for (let s = 0; s <= TOTAL; s++) {
-      await sleep(58);
-      stepEl.textContent = String(s).padStart(2, '0');
-      // Fill segments
-      const filled = Math.round((s / TOTAL) * SEG_COUNT);
-      for (let i = 0; i < SEG_COUNT; i++) {
-        const seg = document.getElementById(`dseg-${i}`);
-        if (seg) seg.classList.toggle('filled', i < filled);
+      await sleep(100);
+
+      stepEl.textContent =
+        String(s).padStart(2, '0');
+
+      const si = Math.min(
+        Math.max(s - 1, 0),
+        steps.length - 1
+      );
+
+      subEl.textContent = steps[si];
+
+      const filled =
+        Math.round(
+          (s / TOTAL) * SEG_COUNT
+        );
+
+      for (
+        let i = 0;
+        i < SEG_COUNT;
+        i++
+      ) {
+        const seg =
+          document.getElementById(
+            `dseg-${i}`
+          );
+
+        if (seg) {
+          seg.classList.toggle(
+            'filled',
+            i < filled
+          );
+        }
       }
-      const si = Math.min(Math.floor((s / TOTAL) * substeps.length), substeps.length - 1);
-      subEl.textContent = substeps[si];
     }
 
     try {
-      const a = anomalies.find(x => x.anomaly_id === id);
-      const best = a?.trajectories.reduce((p, c) => c.efi_score > p.efi_score ? c : p);
-      const r = await fetch(`${API}/api/v1/downscale/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          anomaly_id: id,
-          lead_time_hours: best?.lead_time_hours || 96,
-          target_variables: ['TP', 'U10M', 'V10M', 'T2M'],
-          num_ensemble_samples: 10,
-        }),
-      });
+      const a = anomalies.find(
+        x => x.anomaly_id === id
+      );
+
+      const best =
+        a?.trajectories?.reduce(
+          (p, c) =>
+            c.efi_score > p.efi_score
+              ? c
+              : p
+        );
+
+      const r = await fetch(
+        `${API}/api/v1/downscale/generate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+          body: JSON.stringify({
+            anomaly_id: id,
+            lead_time_hours:
+              best?.lead_time_hours || 48,
+            target_variables: [
+              'temperature',
+              'humidity',
+              'wind',
+              'precipitation'
+            ],
+            num_ensemble_samples: 1,
+          }),
+        }
+      );
+
       const result = await r.json();
+
+      if (!r.ok) {
+        throw new Error(
+          `HTTP ${r.status}`
+        );
+      }
+
+      if (
+        !result ||
+        result.status !== 'success'
+      ) {
+        throw new Error(
+          result?.message ||
+          'V8 local field generation failed'
+        );
+      }
+
       downscaleCache[id] = result;
-      renderDownscaleMap(id, result);
+
+      renderDownscaleMap(
+        id,
+        result
+      );
+
     } catch (err) {
-      console.error('Downscale failed:', err);
+      console.error(
+        '[VATAVARAN] Local field failed:',
+        err
+      );
+
+      subEl.textContent =
+        'V8 local forecast field unavailable';
     }
 
     screen.classList.remove('active');
-    document.getElementById('pipe-4').className = 'pipe-step completed';
-    document.getElementById('pipe-5').className = 'pipe-step completed';
+
     if (btn) btn.disabled = false;
+
     selectAnomaly(id);
     flyTo(id);
   }
 
-  /* ── Downscale Map Render ──────────────────────────────────── */
+/* ── Downscale Map Render ──────────────────────────────────── */
   function renderDownscaleMap(id, result) {
     const features = result.features || [];
     if (features.length < 2) return;
     const grid = features.slice(1);
     const a = anomalies.find(x => x.anomaly_id === id);
-    const isHeat = a?.hazard_type === 'EXTREME_HEAT';
+    const hazard = a?.hazard_type || '';
+    const isHeat = hazard === 'EXTREME_HEAT';
+    const isWind = hazard === 'HIGH_WIND';
+
+    const fieldKey = isHeat
+      ? 'temperature_c'
+      : isWind
+        ? 'wind_speed_kmh'
+        : 'precip_p90_mm';
+
+    const fieldMax = isHeat
+      ? 48
+      : isWind
+        ? 35
+        : 5;
 
     ['heatmap', 'circles'].forEach(t => { if (map.getLayer(`${t}-${id}`)) map.removeLayer(`${t}-${id}`); });
     if (map.getSource(`ds-${id}`)) map.removeSource(`ds-${id}`);
@@ -2052,7 +2565,7 @@
     map.addLayer({
       id: `heatmap-${id}`, type: 'heatmap', source: `ds-${id}`,
       paint: {
-        'heatmap-weight': ['interpolate', ['linear'], ['get', isHeat ? 'temperature_c' : 'precip_p90_mm'], 0, 0, isHeat ? 48 : 280, 1],
+        'heatmap-weight': ['interpolate', ['linear'], ['get', fieldKey], 0, 0, fieldMax, 1],
         'heatmap-intensity': 1.2, 'heatmap-radius': 22, 'heatmap-opacity': 0.45,
         'heatmap-color': isHeat
           ? ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', 0.3, '#f5e6cc', 0.6, '#c97a1a', 1, '#7a4f00']
@@ -2155,7 +2668,7 @@
       const alerts = await res.json();
       const alert = alerts.find(a => a.identifier.includes(id)) || alerts[0];
       if (!alert) throw new Error('No active alert found');
-      showModal(`NDMA Sachet CAP v1.2 Payload · ${alert.identifier}`, `
+      showModal(`CAP / Sachet Alert Payload · ${alert.identifier}`, `
         <div style="margin-bottom:12px; font-family:var(--font-mono); font-size:10px; color:var(--ink-light); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
           <span><strong>Sender:</strong> ${alert.sender}</span>
           <span><strong>Sent:</strong> ${alert.sent}</span>
@@ -2164,10 +2677,10 @@
         </div>
         <p style="font-weight:700; color:var(--red); margin-bottom:6px; font-family:var(--font-display); font-size:13px;">${alert.headline}</p>
         <p style="margin-bottom:10px; font-style:italic; color:var(--ink-mid); font-size:12px;">${alert.instruction}</p>
-        <div style="margin-bottom:6px; font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1px; color:var(--ink-light); text-transform:uppercase;">Standard ITU-T X.1303 CAP JSON Document:</div>
+        <div style="margin-bottom:6px; font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1px; color:var(--ink-light); text-transform:uppercase;">CAP / Sachet JSON Document:</div>
         <pre class="gov-code-block">${JSON.stringify(alert, null, 2)}</pre>
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
-          <button class="cap-action-btn export" onclick="vat.exportCap('${id}')">Download CAP XML File</button>
+          <button class="cap-action-btn export" onclick="vat.exportCap('${id}')">Export CAP XML File</button>
         </div>
       `);
     } catch (err) {
@@ -2185,7 +2698,7 @@
             <strong style="font-family:var(--font-display); color:var(--ink-deep); font-size:12px;">${p.satellite} · ${p.product_name}</strong>
             <span style="font-family:var(--font-mono); font-size:8.5px; background:var(--forest-2); color:#fff; padding:1px 5px; border-radius:2px;">ONLINE</span>
           </div>
-          <div style="font-family:var(--font-mono); font-size:9px; color:var(--ink-light); margin-bottom:6px;">Sensor: ${p.sensor} · Resolution: ${p.resolution_km} km · Coverage: ${p.coverage}</div>
+          <div style="font-family:var(--font-mono); font-size:9px; color:var(--ink-light); margin-bottom:6px;">Sensor: ${p.sensor} · Grid Resolution: ${p.resolution_km} km · Coverage: ${p.coverage}</div>
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-family:var(--font-mono); font-size:9.5px; background:var(--paper-2); padding:6px;">
             <div><span style="color:var(--ink-ghost); font-size:7.5px; display:block;">CLOUD TOP TEMP</span><strong>${p.cloud_top_temp_c}°C</strong></div>
             <div><span style="color:var(--ink-ghost); font-size:7.5px; display:block;">MAX HE RAIN RATE</span><strong>${p.max_rain_rate_mmh} mm/h</strong></div>
@@ -2224,7 +2737,7 @@
       `).join('');
 
       showModal('National Meteorological & Disaster Infrastructure Endpoints', `
-        <p style="font-style:italic; color:var(--ink-light); margin-bottom:12px;">Live status of MoES, IMD, ISRO, and NDMA integration feeds:</p>
+        <p style="font-style:italic; color:var(--ink-light); margin-bottom:12px;">Integration status for connected government-weather interfaces:</p>
         ${rows}
       `);
     } catch (err) {
@@ -2286,6 +2799,1547 @@
   ];
 
 })();
+  
+</script>
+
+<style>
+#ava-toggle{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  z-index:9998;
+  border:1px solid rgba(31,41,55,.18);
+  background:#111827;
+  color:#fff;
+  border-radius:999px;
+  padding:12px 18px;
+  font:700 13px/1.1 Inter,system-ui,sans-serif;
+  cursor:pointer;
+  box-shadow:0 12px 32px rgba(15,23,42,.22);
+}
+#ava-toggle:hover{transform:translateY(-2px)}
+
+#ava-panel{
+  position:fixed;
+  right:24px;
+  bottom:78px;
+  width:min(390px,calc(100vw - 32px));
+  max-height:min(620px,calc(100vh - 110px));
+  z-index:9999;
+  display:none;
+  overflow:hidden;
+  border:1px solid rgba(31,41,55,.15);
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 22px 60px rgba(15,23,42,.22);
+  font-family:Inter,system-ui,sans-serif;
+}
+#ava-panel.ava-open{
+  display:flex;
+  flex-direction:column;
+}
+#ava-head{
+  padding:16px 18px 13px;
+  background:#111827;
+  color:#fff;
+}
+#ava-head-title{font-size:15px;font-weight:800}
+#ava-head-sub{margin-top:4px;font-size:11px;opacity:.72}
+#ava-body{padding:14px;overflow:auto;background:#f8fafc}
+.ava-suggestions{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.ava-chip{
+  border:1px solid rgba(31,41,55,.12);
+  background:#fff;
+  color:#334155;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:11px;
+  cursor:pointer;
+}
+.ava-message{
+  padding:12px 13px;
+  border-radius:13px;
+  margin:8px 0;
+  font-size:12px;
+  line-height:1.5;
+}
+.ava-user{margin-left:35px;background:#e2e8f0;color:#0f172a}
+.ava-bot{
+  margin-right:20px;
+  background:#fff;
+  border:1px solid rgba(31,41,55,.1);
+  color:#1e293b;
+}
+.ava-stat-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin-top:9px;
+}
+.ava-stat{padding:9px;border-radius:10px;background:#f1f5f9}
+.ava-stat-label{
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#64748b;
+}
+.ava-stat-value{
+  margin-top:2px;
+  font-size:12px;
+  font-weight:800;
+  color:#0f172a;
+}
+#ava-foot{
+  display:flex;
+  gap:8px;
+  padding:11px;
+  border-top:1px solid rgba(31,41,55,.1);
+}
+#ava-input{
+  flex:1;
+  min-width:0;
+  border:1px solid rgba(31,41,55,.15);
+  border-radius:11px;
+  padding:10px 11px;
+  outline:none;
+  font:12px Inter,system-ui,sans-serif;
+}
+#ava-send{
+  border:0;
+  border-radius:11px;
+  padding:0 13px;
+  background:#111827;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+
+
+
+
+
+/* VATAWARAN MOVABLE ASSISTANT BUTTON */
+#ava-toggle{
+  touch-action:none;
+  user-select:none;
+  cursor:grab;
+}
+
+#ava-toggle.ava-toggle-dragging{
+  cursor:grabbing;
+}
+/* VATAWARAN RESIZABLE ASSISTANT */
+#ava-panel{
+  resize:both;
+  min-width:280px;
+  min-height:260px;
+  max-width:calc(100vw - 16px);
+  max-height:calc(100vh - 40px);
+}
+</style>
+
+<button id="ava-toggle" type="button">◈ Ask VATAWARAN</button>
+
+<section id="ava-panel" aria-label="Ask VATAWARAN analytical assistant">
+  <div id="ava-head">
+    <div id="ava-head-title">Ask VATAWARAN</div>
+    <div id="ava-head-sub">V8 AI-powered anomaly intelligence · freeform weather reasoning</div>
+  </div>
+
+  <div id="ava-body">
+    <div class="ava-suggestions">
+      <button class="ava-chip" data-q="What is the highest severity anomaly?">Highest severity</button>
+      <button class="ava-chip" data-q="Which anomaly has the highest precipitation?">Highest rain</button>
+      <button class="ava-chip" data-q="Which anomaly has the highest wind?">Highest wind</button>
+      <button class="ava-chip" data-q="Tell me about Patna.">Patna</button>
+      <button class="ava-chip" data-q="How many anomalies are detected?">Total anomalies</button>
+    </div>
+
+    <div id="ava-messages">
+      <div class="ava-message ava-bot">
+        <b>VATAWARAN:</b> Ask about severity, location, movement, precipitation, wind, physics consistency, or forecast horizon.
+      </div>
+    </div>
+  </div>
+
+  <div id="ava-foot">
+    <input id="ava-input" type="text" placeholder="Ask about the V8 forecast..." autocomplete="off">
+    <button id="ava-send" type="button">Ask</button>
+  </div>
+</section>
+
+<script>
+(function(){
+  "use strict";
+
+  const toggle = document.getElementById("ava-toggle");
+  const panel = document.getElementById("ava-panel");
+  const input = document.getElementById("ava-input");
+  const send = document.getElementById("ava-send");
+  const messages = document.getElementById("ava-messages");
+
+  if(!toggle || !panel || !input || !send || !messages) return;
+
+  let cached = [];
+
+  function esc(v){
+    return String(v ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function num(v){
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function trackId(a){
+    return String(
+      a.track_id ??
+      a.anomaly_id ??
+      a.event_id ??
+      a.id ??
+      a.code ??
+      "N/A"
+    );
+  }
+
+  function hazard(a){
+    let raw =
+      a.hazard ??
+      a.hazard_type ??
+      a.anomaly_type ??
+      a.event_type ??
+      a.type ??
+      a.category ??
+      a.classification ??
+      a.label ??
+      "";
+
+    raw = String(raw);
+
+    if(!raw || raw === "undefined" || raw === "null"){
+      const id = trackId(a).toLowerCase();
+      const desc = String(a.description ?? a.summary ?? "").toLowerCase();
+
+      if(id.includes("heat") || desc.includes("heat")) raw = "Extreme Heat";
+      else if(id.includes("wind") || desc.includes("wind")) raw = "High Wind";
+      else if(
+        id.includes("precip") ||
+        id.includes("rain") ||
+        desc.includes("precip") ||
+        desc.includes("rain")
+      ) raw = "Extreme Precipitation";
+      else raw = "Unknown";
+    }
+
+    raw = raw
+      .replaceAll("_"," ")
+      .replace(/\b\w/g,c=>c.toUpperCase());
+
+    if(/extreme heat/i.test(raw)) return "Extreme Heat";
+    if(/high wind|extreme wind/i.test(raw)) return "High Wind";
+    if(/extreme precipitation|heavy precipitation|rainfall/i.test(raw)) return "Extreme Precipitation";
+
+    return raw;
+  }
+
+  function severity(a){
+    return num(
+      a.severity ??
+      a.mean_severity ??
+      a.peak_severity ??
+      a.peak_efi ??
+      a.efi_score
+    );
+  }
+
+  function loc(a){
+    let lat = null;
+    let lon = null;
+
+    if(a.latitude !== undefined) lat = a.latitude;
+    if(a.longitude !== undefined) lon = a.longitude;
+
+    if((lat === null || lon === null) && a.lat !== undefined && a.lon !== undefined){
+      lat = a.lat;
+      lon = a.lon;
+    }
+
+    if((lat === null || lon === null) && Array.isArray(a.centroid)){
+      lon = a.centroid[0];
+      lat = a.centroid[1];
+    }
+
+    if((lat === null || lon === null) && a.centroid && typeof a.centroid === "object"){
+      lat = a.centroid.latitude ?? a.centroid.lat ?? a.centroid.y ?? null;
+      lon = a.centroid.longitude ?? a.centroid.lon ?? a.centroid.lng ?? a.centroid.x ?? null;
+    }
+
+    if((lat === null || lon === null) && Array.isArray(a.trajectories) && a.trajectories.length){
+      const points = a.trajectories.filter(t =>
+        Array.isArray(t.centroid) &&
+        t.centroid.length >= 2 &&
+        Number.isFinite(Number(t.centroid[0])) &&
+        Number.isFinite(Number(t.centroid[1]))
+      );
+
+      if(points.length){
+        const best = points.reduce((x,y) =>
+          num(y.efi_score ?? y.severity ?? 0) > num(x.efi_score ?? x.severity ?? 0)
+            ? y : x
+        );
+
+        lon = Number(best.centroid[0]);
+        lat = Number(best.centroid[1]);
+      }
+    }
+
+    if((lat === null || lon === null) && a.geometry?.coordinates){
+      const c = a.geometry.coordinates;
+      if(Array.isArray(c) && c.length >= 2){
+        lon = c[0];
+        lat = c[1];
+      }
+    }
+
+    lat = Number(lat);
+    lon = Number(lon);
+
+    return Number.isFinite(lat) && Number.isFinite(lon)
+      ? lat.toFixed(2)+"°N, "+lon.toFixed(2)+"°E"
+      : "location unavailable";
+  }
+
+  /* VATA_CHAT_API_FIX */
+const CHAT_API =
+  (window.location.hostname === 'localhost' ||
+   window.location.hostname === '127.0.0.1' ||
+   window.location.protocol === 'file:')
+    ? 'http://127.0.0.1:8000'
+    : window.location.origin;
+async function loadData(){
+    try{
+      const r = await fetch(`${CHAT_API}/api/v1/forecast/track?lead_time_min=48&lead_time_max=240&min_efi=0.80`);
+      const j = await r.json();
+      if(Array.isArray(j.data)) cached = j.data;
+    }catch(e){
+      console.warn("Ask VATAWARAN data load failed:",e);
+    }
+    return cached;
+  }
+
+  /* VATA_STABLE_CUTE_VOICE */
+function speakBot(text){
+if(!("speechSynthesis" in window))return;
+const box=document.createElement("div");
+box.innerHTML=String(text||"");
+const spoken=box.textContent.replace(/\s+/g," ").replace(/\bVATAWARAN\b/gi,"वातावरण").trim();
+if(!spoken)return;
+const voices=window.speechSynthesis.getVoices();
+let voice=null;
+const saved=localStorage.getItem("vatavaranVoiceURI");
+if(saved)voice=voices.find(v=>v.voiceURI===saved)||null;
+if(!voice)voice=voices.find(v=>/^hi-IN$/i.test(v.lang)&&/female|heera|kalpana|swara|aarti|veena|priya|neerja/i.test(v.name||""))||voices.find(v=>/^hi-IN$/i.test(v.lang))||voices.find(v=>/^en-IN$/i.test(v.lang))||voices[0]||null;
+if(voice)localStorage.setItem("vatavaranVoiceURI",voice.voiceURI);
+window.speechSynthesis.cancel();
+const u=new SpeechSynthesisUtterance(spoken);
+u.voice=voice||null;
+u.lang=voice?.lang||"hi-IN";
+u.rate=0.88;
+u.pitch=1.18;
+u.volume=1;
+window.speechSynthesis.speak(u);
+}
+function add(text,type){
+    const el=document.createElement("div");
+    el.className="ava-message "+(type==="user"?"ava-user":"ava-bot");
+    el.innerHTML=text;
+    messages.appendChild(el);
+    document.getElementById("ava-body").scrollTop=
+      document.getElementById("ava-body").scrollHeight;
+  }
+
+  function topBy(arr,fn){
+    return arr.reduce((x,y)=>fn(y)>fn(x)?y:x,arr[0]);
+  }
+  function deterministicAnswer(q,arr){
+    const raw = String(q || "").trim();
+    const t = raw.toLowerCase()
+      .replace(/[?!.،,]/g," ")
+      .replace(/\s+/g," ")
+      .trim();
+
+    const hasAny = (...words) => words.some(w => t.includes(w));
+
+    /* Natural conversation: greeting + identity */
+    if(
+      hasAny(
+        "hello","hi","hey","hlo","helo","namaste",
+        "good morning","good afternoon","good evening"
+      )
+    ){
+      return `
+        <b>Namaste 👋</b><br>
+        Main <b>VATAWARAN Assistant AI</b> hoon.
+        <br>
+        <span style="font-size:10px;color:#64748b">
+          Visual Analytics for Tracking Atmospheric Weather Anomalies and Risks
+        </span>
+      `;
+    }
+
+    if(
+      hasAny(
+        "what is your name",
+        "whats your name",
+        "what's your name",
+        "who are you",
+        "your name",
+        "aapka naam kya hai",
+        "aap ka naam kya hai",
+        "tumhara naam kya hai",
+        "tumhara naam",
+        "naam kya hai",
+        "kaun ho tum",
+        "aap kaun ho"
+      )
+    ){
+      return `
+        <b>Main VATAWARAN Assistant AI hoon.</b><br>
+        Full form:
+        <span style="font-weight:700">
+          Visual Analytics for Tracking Atmospheric Weather Anomalies and Risks
+        </span>
+        <br><br>
+        Main V8-based extreme-weather anomaly tracking aur risk intelligence provide karta hoon.
+      `;
+    }
+
+    if(!arr.length){
+      return "<b>VATAWARAN:</b> Abhi V8 anomaly data available nahi hai. Dashboard refresh karke dobara poochho.";
+    }
+
+    
+
+    function bestBy(arr,fn){
+      return arr.reduce((x,y)=>fn(y)>fn(x)?y:x,arr[0]);
+    }
+
+    function cityMatch(name){
+      const aliases = {
+        patna:["patna"],
+        delhi:["delhi","new delhi","dilli"],
+        mumbai:["mumbai","bombay"],
+        kolkata:["kolkata","calcutta"],
+        chennai:["chennai","madras"],
+        bengaluru:["bengaluru","bangalore"],
+        hyderabad:["hyderabad"],
+        ahmedabad:["ahmedabad"]
+      };
+      return (aliases[name] || [name]).some(x => t.includes(x));
+    }
+
+    function firstMatchingCity(){
+      return Object.keys({
+        patna:1,delhi:1,mumbai:1,kolkata:1,chennai:1,
+        bengaluru:1,hyderabad:1,ahmedabad:1
+      }).find(cityMatch) || null;
+    }
+
+    function scopedData(city){
+      if(!city) return arr;
+
+      const aliases = {
+        patna:["patna"],
+        delhi:["delhi","new delhi","dilli"],
+        mumbai:["mumbai","bombay"],
+        kolkata:["kolkata","calcutta"],
+        chennai:["chennai","madras"],
+        bengaluru:["bengaluru","bangalore"],
+        hyderabad:["hyderabad"],
+        ahmedabad:["ahmedabad"]
+      };
+
+      return arr.filter(a=>{
+        const blob = JSON.stringify(a).toLowerCase();
+        return (aliases[city] || [city]).some(x => blob.includes(x));
+      });
+    }
+
+    const city = firstMatchingCity();
+    const scoped = scopedData(city);
+
+    /* ---------------------------------------------------------
+       1. TOTAL / COUNT QUESTIONS
+       --------------------------------------------------------- */
+    if(
+      hasAny(
+        "how many","number of","total anomaly","total anomalies",
+        "kitne anomaly","kitni anomaly","kitne anomalies",
+        "kitna anomaly","kul kitne","kul kitni",
+        "number kitna","count kitna"
+      )
+    ){
+      const heat = arr.filter(a=>/heat/i.test(hazard(a))).length;
+      const wind = arr.filter(a=>/wind/i.test(hazard(a))).length;
+      const rain = arr.filter(a=>/precip|rain/i.test(hazard(a))).length;
+
+      return `
+        <b>VATAWARAN:</b> Abhi <b>${arr.length}</b> active V8 anomaly records detect hue hain.
+        <div class="ava-stat-grid">
+          <div class="ava-stat">
+            <div class="ava-stat-label">Extreme Heat</div>
+            <div class="ava-stat-value">${heat}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">High Wind</div>
+            <div class="ava-stat-value">${wind}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Extreme Precipitation</div>
+            <div class="ava-stat-value">${rain}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Tracking Source</div>
+            <div class="ava-stat-value">V8</div>
+          </div>
+        </div>`;
+    }
+
+    /* ---------------------------------------------------------
+       2. HIGHEST / MOST DANGEROUS
+       --------------------------------------------------------- */
+    if(
+      hasAny(
+        "highest severity","most severe","most dangerous","strongest anomaly",
+        "dangerous anomaly","khatarnak","sabse khatarnak",
+        "sabse dangerous","sabse zyada risk","highest risk",
+        "worst anomaly","badi problem","serious anomaly"
+      )
+    ){
+      const a = bestBy(scoped,severity);
+
+      return `
+        <b>Sabse high-severity anomaly:</b><br>
+        ${esc(hazard(a))} · ${esc(trackId(a))}
+        <div class="ava-stat-grid">
+          <div class="ava-stat">
+            <div class="ava-stat-label">Severity</div>
+            <div class="ava-stat-value">${severity(a).toFixed(3)}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Location</div>
+            <div class="ava-stat-value">${esc(loc(a))}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Physics</div>
+            <div class="ava-stat-value">${num(a.physics_consistency).toFixed(0)}%</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Track</div>
+            <div class="ava-stat-value">${esc(trackId(a))}</div>
+          </div>
+        </div>`;
+    }
+
+    /* ---------------------------------------------------------
+       3. PRECIPITATION / RAIN / FLOOD-RELATED QUESTIONS
+       --------------------------------------------------------- */
+    if(
+      hasAny(
+        "precipitation","rain","rainfall","baarish","barish",
+        "barsaat","varsha","paani","heavy rain","bahut baarish",
+        "tez baarish","flood","baadh","flooding","waterlogging"
+      )
+    ){
+      const a = bestBy(scoped,a =>
+        num(a.precipitation_max ?? a.precipitation_mean ?? a.precipitation)
+      );
+
+      return `
+        <b>Rain / precipitation intelligence:</b><br>
+        ${esc(hazard(a))} · ${esc(trackId(a))}
+        <div class="ava-stat-grid">
+          <div class="ava-stat">
+            <div class="ava-stat-label">Precipitation</div>
+            <div class="ava-stat-value">${num(a.precipitation_max ?? a.precipitation_mean ?? a.precipitation).toFixed(2)} mm</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Location</div>
+            <div class="ava-stat-value">${esc(loc(a))}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Severity</div>
+            <div class="ava-stat-value">${severity(a).toFixed(3)}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Physics</div>
+            <div class="ava-stat-value">${num(a.physics_consistency).toFixed(0)}%</div>
+          </div>
+        </div>`;
+    }
+
+    /* ---------------------------------------------------------
+       4. WIND / STORM / AANDHI QUESTIONS
+       --------------------------------------------------------- */
+    if(
+      hasAny(
+        "wind","hawa","havaa","aandhi","storm","toofan",
+        "strong winds","tez hawa","fast wind"
+      )
+    ){
+      const a = bestBy(scoped,a =>
+        num(a.wind_mean ?? a.wind_speed_kmh ?? a.wind)
+      );
+
+      return `
+        <b>Wind intelligence:</b><br>
+        ${esc(hazard(a))} · ${esc(trackId(a))}
+        <div class="ava-stat-grid">
+          <div class="ava-stat">
+            <div class="ava-stat-label">Wind</div>
+            <div class="ava-stat-value">${num(a.wind_mean ?? a.wind_speed_kmh ?? a.wind).toFixed(1)} km/h</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Location</div>
+            <div class="ava-stat-value">${esc(loc(a))}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Severity</div>
+            <div class="ava-stat-value">${severity(a).toFixed(3)}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Physics</div>
+            <div class="ava-stat-value">${num(a.physics_consistency).toFixed(0)}%</div>
+          </div>
+        </div>`;
+    }
+
+    /* ---------------------------------------------------------
+       5. MOVEMENT / DIRECTION / TRACKING
+       --------------------------------------------------------- */
+    if(
+      hasAny(
+        "movement","moving","direction","track","trajectory",
+        "kis taraf","kidhar","kahan ja","ja raha","ja rahi",
+        "move kar","chal raha","chal rahi","direction kya",
+        "track kya","trajectory kya"
+      )
+    ){
+      const a = scoped[0];
+
+      return `
+        <b>Spatio-temporal track intelligence:</b><br>
+        ${esc(trackId(a))}
+        <div class="ava-stat-grid">
+          <div class="ava-stat">
+            <div class="ava-stat-label">Direction</div>
+            <div class="ava-stat-value">${esc(a.movement_direction || "N/A")}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Speed</div>
+            <div class="ava-stat-value">${num(a.speed_kmh).toFixed(1)} km/h</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Bearing</div>
+            <div class="ava-stat-value">${num(a.movement_bearing_deg).toFixed(0)}°</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Track Points</div>
+            <div class="ava-stat-value">${Array.isArray(a.trajectories) ? a.trajectories.length : 0}</div>
+          </div>
+        </div>`;
+    }
+
+    /* ---------------------------------------------------------
+       6. PHYSICS / CONFIDENCE / TRUST
+       --------------------------------------------------------- */
+    if(
+      hasAny(
+        "physics","physics consistency","physically consistent",
+        "confidence","reliable","reliability","trust",
+        "bharosa","kitna confidence","confidence kitna",
+        "physics sahi","physics theek"
+      )
+    ){
+      const a = bestBy(scoped,a => num(a.physics_consistency));
+
+      return `
+        <b>Physics-consistency signal:</b><br>
+        ${esc(trackId(a))} → <b>${num(a.physics_consistency).toFixed(0)}%</b>
+        <div style="margin-top:7px;font-size:10px;color:#64748b">
+          Ye VATAWARAN ka lightweight physics-consistency heuristic hai; ye full numerical atmospheric simulation nahi hai.
+        </div>`;
+    }
+
+    /* ---------------------------------------------------------
+       7. GENERAL LOCATION / CITY QUESTIONS
+       --------------------------------------------------------- */
+    if(city || hasAny(
+      "where","location","risk kaha","risk kahan","kahan risk",
+      "kis jagah","kaunsi jagah","kaunsa area","konsa area",
+      "area risky","jagah risky"
+    )){
+      if(!scoped.length){
+        const overall=[...arr]
+          .sort((a,b)=>severity(b)-severity(a))
+          .slice(0,3);
+
+        return `
+          <b>VATAWARAN:</b>
+          <b>${esc(city || "is location")}</b> ke liye current V8 tracked anomalies mein
+          <b>direct anomaly match nahi mila</b>.<br><br>
+
+          Iska matlab ye nahi hai ki area mein zero weather risk hai;
+          sirf current 15 tracked anomalies mein
+          <b>${esc(city || "is location")}</b> direct tracked zone ke roop mein identify nahi hua.<br><br>
+
+          <b>Current V8 situation:</b><br>
+          ${overall.map(a => `
+            • ${esc(hazard(a))} — Severity ${severity(a).toFixed(2)}
+            · ${esc(trackId(a))}
+          `).join("<br>")}
+        `;
+      }
+
+      const top = [...scoped]
+        .sort((a,b)=>severity(b)-severity(a))
+        .slice(0,3);
+
+      return `
+        <b>${city ? esc(city.toUpperCase()) : "Location"} intelligence:</b><br>
+        ${top.map(a=>`
+          <div class="ava-message" style="margin:8px 0 0;background:#f8fafc">
+            <b>${esc(hazard(a))}</b><br>
+            Severity: ${severity(a).toFixed(3)} ·
+            ${esc(loc(a))}<br>
+            Track: ${esc(trackId(a))}
+          </div>
+        `).join("")}`;
+    }
+
+    /* ---------------------------------------------------------
+       8. GENERAL "SITUATION / FORECAST / RISK" QUESTIONS
+       --------------------------------------------------------- */
+    if(
+      hasAny(
+        "situation","situation kaisi","weather kaisa","weather kaisi",
+        "kya ho raha","kya hone wala","aage kya","next kya",
+        "forecast","outlook","risk kya","danger hai","dangerous hai",
+        "koi problem","koi risk","koi khatra","koi anomaly",
+        "agle kuch din","aane wale din","next few days",
+        "agale 48","agle 48","agale 72","agle 72"
+      )
+    ){
+      const a = bestBy(scoped,severity);
+
+      const heat = arr.filter(x=>/heat/i.test(hazard(x))).length;
+      const wind = arr.filter(x=>/wind/i.test(hazard(x))).length;
+      const rain = arr.filter(x=>/precip|rain/i.test(hazard(x))).length;
+
+      return `
+        <b>VATAWARAN forecast situation:</b><br>
+        Current V8 tracking mein <b>${scoped.length}</b> matching anomaly record(s) hain.
+        Sabse strong signal <b>${esc(hazard(a))}</b> hai,
+        severity <b>${severity(a).toFixed(3)}</b>.
+        <div class="ava-stat-grid">
+          <div class="ava-stat">
+            <div class="ava-stat-label">Heat Signals</div>
+            <div class="ava-stat-value">${heat}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Wind Signals</div>
+            <div class="ava-stat-value">${wind}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Rain Signals</div>
+            <div class="ava-stat-value">${rain}</div>
+          </div>
+          <div class="ava-stat">
+            <div class="ava-stat-label">Top Location</div>
+            <div class="ava-stat-value">${esc(loc(a))}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:#64748b">
+          Ye answer currently loaded V8 anomaly-tracking data par based hai.
+        </div>`;
+    }
+
+    /* ---------------------------------------------------------
+       9. FALLBACK
+       --------------------------------------------------------- */
+    return `
+      <b>VATAWARAN:</b> Main natural Hindi, Hinglish aur English mein
+      V8 anomaly-related questions samajh sakta hoon.
+      <br><br>
+      Jaise:
+      <b>“Patna mein kya risk hai?”</b>,
+      <b>“Sabse khatarnak anomaly kaunsi hai?”</b>,
+      <b>“Kahan bahut baarish ka signal hai?”</b>,
+      <b>“Ye kis taraf ja raha hai?”</b>
+      ya <b>“Situation kaisi lag rahi hai?”</b>
+    `;
+  }
+
+  const VATAWARAN_CHAT_HISTORY = [];
+
+  async function answer(q,arr){
+    try{
+      const context = (Array.isArray(arr) ? arr : []).map(a => ({
+        anomaly_id: a.anomaly_id,
+        hazard_type: a.hazard_type,
+        peak_efi: a.peak_efi,
+        confidence_score: a.confidence_score,
+        description: a.description,
+        trajectories: Array.isArray(a.trajectories)
+          ? a.trajectories.slice(0,25)
+          : []
+      }));
+
+      const r = await fetch(`${CHAT_API}/api/v1/assistant/chat`,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          query:q,
+          history:VATAWARAN_CHAT_HISTORY.slice(-8),
+          anomalies:context
+        })
+      });
+
+      if(!r.ok){
+        throw new Error(`assistant HTTP ${r.status}`);
+      }
+
+      const d = await r.json();
+
+      if(!d.reply){
+        throw new Error("assistant returned empty reply");
+      }
+
+      const reply = String(d.reply).trim();
+
+      /*
+       * Escape AI text before inserting into innerHTML.
+       * This keeps the freeform response safe.
+       */
+      let rendered = esc(reply);
+
+      rendered = rendered
+        .replace(/\*\*(.+?)\*\*/gs, "<strong>$1</strong>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\r?\n/g, "<br>");
+
+      return rendered;
+
+    }catch(err){
+      console.warn(
+        "[VATAWARAN] Freeform AI unavailable; deterministic fallback active:",
+        err
+      );
+
+      return deterministicAnswer(q,arr);
+    }
+  }
+  async function submit(){
+    const q=input.value.trim();
+    if(!q) return;
+
+    add(esc(q),"user");
+    input.value="";
+
+    const arr=await loadData();
+    const reply=await answer(q,arr);
+
+    add(reply,"bot");
+
+    const historyBox = document.createElement("div");
+    historyBox.innerHTML = reply;
+
+    VATAWARAN_CHAT_HISTORY.push({
+        role:"user",
+        content:q
+    });
+
+    VATAWARAN_CHAT_HISTORY.push({
+        role:"assistant",
+        content:(historyBox.textContent || "").trim()
+    });
+
+    setTimeout(function(){
+        if(typeof speakBot==="function"){
+            speakBot(reply);
+        }
+    },150);
+}
+
+  toggle.addEventListener("click",async()=>{
+    panel.classList.toggle("ava-open");
+    if(panel.classList.contains("ava-open")){
+      await loadData();
+      input.focus();
+    }
+  });
+
+  send.onclick = function(e){
+    e.preventDefault();
+    submit();
+  };
+
+  input.addEventListener("keydown",e=>{
+    if(e.key==="Enter"){
+      e.preventDefault();
+      submit();
+    }
+  });
+
+  document.querySelectorAll(".ava-chip").forEach(chip=>{
+    chip.addEventListener("click",()=>{
+      input.value=chip.dataset.q || "";
+      submit();
+    });
+  });
+
+})();
+</script>
+<!-- VATA_SIMPLE_TTS_PATCH -->
+<script>
+(function(){
+  "use strict";
+
+  let voiceOn = true;
+
+  function speak(text){
+    if(!voiceOn || !("speechSynthesis" in window)) return;
+
+    const box = document.createElement("div");
+    box.innerHTML = String(text || "");
+
+    const spoken = box.textContent
+      .replace(/\s+/g," ")
+      .replace(/\bVATAWARAN\b/gi,"वातावरण")
+      .trim();
+
+    if(!spoken) return;
+
+    window.speechSynthesis.cancel();
+
+    const u = new SpeechSynthesisUtterance(spoken);
+    u.lang = "hi-IN";
+    u.rate = 0.90;
+    u.pitch = 1.12;
+    u.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+
+    const v =
+      voices.find(x => /female|heera|kalpana|google hindi|microsoft.*heera|zira|samantha|susan|hazel/i.test(
+        (x.name || "") + " " + (x.voiceURI || "")
+      )) ||
+      voices.find(x => /^hi-IN$/i.test(x.lang)) ||
+      voices.find(x => /^hi/i.test(x.lang)) ||
+      voices.find(x => /^en-IN$/i.test(x.lang)) ||
+      voices.find(x => /^en/i.test(x.lang)) ||
+      voices[0];
+
+    if(v) u.voice = v;
+
+    
+  }
+
+  function waitForReply(previous){
+    const box = document.getElementById("ava-messages");
+
+    if(!box) return;
+
+    let tries = 0;
+
+    const timer = setInterval(function(){
+      tries++;
+
+      const bots = box.querySelectorAll(".ava-bot");
+
+      if(bots.length){
+        const last = bots[bots.length - 1];
+
+        if(last !== previous){
+          clearInterval(timer);
+          speak(last.innerHTML);
+          return;
+        }
+      }
+
+      if(tries >= 30){
+        clearInterval(timer);
+      }
+    },100);
+  }
+
+  const send = document.getElementById("ava-send");
+  const input = document.getElementById("ava-input");
+
+  function triggerSpeech(){
+    const box = document.getElementById("ava-messages");
+    if(!box) return;
+
+    const bots = box.querySelectorAll(".ava-bot");
+    const previous = bots.length ? bots[bots.length - 1] : null;
+
+    waitForReply(previous);
+  }
+
+  if(send){
+    send.addEventListener("click",function(){
+      triggerSpeech();
+    });
+  }
+
+  if(input){
+    input.addEventListener("keydown",function(e){
+      if(e.key === "Enter"){
+        triggerSpeech();
+      }
+    });
+  }
+
+  const voiceBtn = document.getElementById("ava-voice");
+
+  if(voiceBtn){
+    voiceBtn.addEventListener("click",function(){
+      voiceOn = !voiceOn;
+
+      if(!voiceOn){
+        window.speechSynthesis?.cancel();
+      }
+
+      voiceBtn.textContent = voiceOn ? "🔊" : "🔇";
+    });
+  }
+
+  /* Browser voice self-test */
+  window.vataSimpleSpeak = function(){
+    speak(
+      "Namaste. VATAWARAN voice system is working."
+    );
+  };
+
+})();
+</script>
+
+<!-- VATA_CHAT_STABILIZER -->
+<script>
+(function(){
+  "use strict";
+
+  document.addEventListener("click",function(e){
+    const button=e.target.closest("#ava-toggle");
+    if(!button) return;
+
+    const panel=document.getElementById("ava-panel");
+    if(!panel) return;
+
+    const shouldOpen=!panel.classList.contains("ava-open");
+
+    setTimeout(function(){
+      panel.classList.toggle("ava-open",shouldOpen);
+      panel.style.display=shouldOpen ? "flex" : "none";
+      panel.style.flexDirection="column";
+
+      button.setAttribute(
+        "aria-expanded",
+        shouldOpen ? "true" : "false"
+      );
+
+      if(shouldOpen){
+        const input=document.getElementById("ava-input");
+        if(input){
+          setTimeout(function(){
+            input.focus();
+          },50);
+        }
+      }
+    },0);
+  },true);
+
+})();
+</script>
+<script>
+/* VATAWARAN_DRAG_SCRIPT_V1 */
+(function(){
+  const panel = document.getElementById("ava-panel");
+  const head = document.getElementById("ava-head");
+
+  if(!panel || !head) return;
+
+  const STORAGE_KEY = "vatavaranAssistantPosition";
+
+  let dragging = false;
+  let pointerId = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  function clamp(value,min,max){
+    return Math.min(Math.max(value,min),max);
+  }
+
+  function savePosition(x,y){
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({x:x,y:y})
+    );
+  }
+
+  function restorePosition(){
+    try{
+      const saved = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) || "null"
+      );
+
+      if(!saved) return;
+      if(typeof saved.x !== "number") return;
+      if(typeof saved.y !== "number") return;
+
+      const rect = panel.getBoundingClientRect();
+
+      const maxX = Math.max(8, window.innerWidth - rect.width - 8);
+      const maxY = Math.max(8, window.innerHeight - rect.height - 8);
+
+      panel.style.left =
+        clamp(saved.x,8,maxX) + "px";
+
+      panel.style.top =
+        clamp(saved.y,8,maxY) + "px";
+
+      panel.style.right = "auto";
+      panel.style.bottom = "auto";
+    }catch(err){
+      console.warn(
+        "[VATAWARAN] Could not restore assistant position:",
+        err
+      );
+    }
+  }
+
+  function startDrag(e){
+    if(!panel.classList.contains("ava-open")) return;
+
+    dragging = true;
+    pointerId = e.pointerId;
+
+    const rect = panel.getBoundingClientRect();
+
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    panel.classList.add("ava-dragging");
+
+    try{
+      head.setPointerCapture(pointerId);
+    }catch(_){}
+
+    e.preventDefault();
+  }
+
+  function moveDrag(e){
+    if(!dragging) return;
+    if(e.pointerId !== pointerId) return;
+
+    const rect = panel.getBoundingClientRect();
+
+    const maxX = Math.max(8, window.innerWidth - rect.width - 8);
+    const maxY = Math.max(8, window.innerHeight - rect.height - 8);
+
+    const x = clamp(
+      e.clientX - offsetX,
+      8,
+      maxX
+    );
+
+    const y = clamp(
+      e.clientY - offsetY,
+      8,
+      maxY
+    );
+
+    panel.style.left = x + "px";
+    panel.style.top = y + "px";
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+
+    e.preventDefault();
+  }
+
+  function endDrag(e){
+    if(!dragging) return;
+    if(
+      e.pointerId !== undefined &&
+      e.pointerId !== pointerId
+    ){
+      return;
+    }
+
+    dragging = false;
+    panel.classList.remove("ava-dragging");
+
+    const rect = panel.getBoundingClientRect();
+
+    savePosition(
+      rect.left,
+      rect.top
+    );
+
+    try{
+      head.releasePointerCapture(pointerId);
+    }catch(_){}
+
+    pointerId = null;
+  }
+
+  head.addEventListener("pointerdown",startDrag);
+  head.addEventListener("pointermove",moveDrag);
+  head.addEventListener("pointerup",endDrag);
+  head.addEventListener("pointercancel",endDrag);
+
+  window.addEventListener("resize",function(){
+    if(!panel.classList.contains("ava-open")) return;
+
+    const rect = panel.getBoundingClientRect();
+
+    const maxX = Math.max(8, window.innerWidth - rect.width - 8);
+    const maxY = Math.max(8, window.innerHeight - rect.height - 8);
+
+    const x = clamp(rect.left,8,maxX);
+    const y = clamp(rect.top,8,maxY);
+
+    panel.style.left = x + "px";
+    panel.style.top = y + "px";
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+
+    savePosition(x,y);
+  });
+
+  let wasOpen = panel.classList.contains("ava-open");
+
+  const observer = new MutationObserver(function(){
+    const isOpen = panel.classList.contains("ava-open");
+
+    if(isOpen && !wasOpen){
+      restorePosition();
+    }
+
+    wasOpen = isOpen;
+  });
+
+  observer.observe(panel,{
+    attributes:true,
+    attributeFilter:["class"]
+  });
+
+})();
+</script>
+<script>
+/* VATAWARAN_TOGGLE_DRAG_V1 */
+(function(){
+  const button = document.getElementById("ava-toggle");
+
+  if(!button) return;
+
+  const STORAGE_KEY = "vatavaranAssistantButtonPosition";
+
+  let dragging = false;
+  let pointerId = null;
+  let offsetX = 0;
+  let offsetY = 0;
+  let moved = false;
+
+  function clamp(value,min,max){
+    return Math.min(Math.max(value,min),max);
+  }
+
+  function savePosition(x,y){
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        x:x,
+        y:y
+      })
+    );
+  }
+
+  function restorePosition(){
+    try{
+      const saved = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) || "null"
+      );
+
+      if(!saved) return;
+
+      if(
+        typeof saved.x !== "number" ||
+        typeof saved.y !== "number"
+      ){
+        return;
+      }
+
+      const rect = button.getBoundingClientRect();
+
+      const maxX = Math.max(
+        8,
+        window.innerWidth - rect.width - 8
+      );
+
+      const maxY = Math.max(
+        8,
+        window.innerHeight - rect.height - 8
+      );
+
+      const x = clamp(saved.x,8,maxX);
+      const y = clamp(saved.y,8,maxY);
+
+      button.style.left = x + "px";
+      button.style.top = y + "px";
+      button.style.right = "auto";
+      button.style.bottom = "auto";
+    }
+    catch(err){
+      console.warn(
+        "[VATAWARAN] Toggle position restore failed:",
+        err
+      );
+    }
+  }
+
+  function startDrag(e){
+    dragging = true;
+    moved = false;
+    pointerId = e.pointerId;
+
+    const rect = button.getBoundingClientRect();
+
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    button.classList.add("ava-toggle-dragging");
+
+    try{
+      button.setPointerCapture(pointerId);
+    }catch(_){}
+
+    e.preventDefault();
+  }
+
+  function moveDrag(e){
+    if(!dragging) return;
+    if(e.pointerId !== pointerId) return;
+
+    const rect = button.getBoundingClientRect();
+
+    const maxX = Math.max(
+      8,
+      window.innerWidth - rect.width - 8
+    );
+
+    const maxY = Math.max(
+      8,
+      window.innerHeight - rect.height - 8
+    );
+
+    const x = clamp(
+      e.clientX - offsetX,
+      8,
+      maxX
+    );
+
+    const y = clamp(
+      e.clientY - offsetY,
+      8,
+      maxY
+    );
+
+    if(
+      Math.abs(x - rect.left) > 3 ||
+      Math.abs(y - rect.top) > 3
+    ){
+      moved = true;
+    }
+
+    button.style.left = x + "px";
+    button.style.top = y + "px";
+    button.style.right = "auto";
+    button.style.bottom = "auto";
+
+    e.preventDefault();
+  }
+
+  function endDrag(e){
+    if(!dragging) return;
+
+    if(
+      e.pointerId !== undefined &&
+      e.pointerId !== pointerId
+    ){
+      return;
+    }
+
+    dragging = false;
+
+    button.classList.remove("ava-toggle-dragging");
+
+    const rect = button.getBoundingClientRect();
+
+    savePosition(
+      rect.left,
+      rect.top
+    );
+
+    try{
+      button.releasePointerCapture(pointerId);
+    }catch(_){}
+
+    pointerId = null;
+
+    /*
+     * A drag should NOT also trigger the existing
+     * click handlers that open/close the panel.
+     */
+    if(moved){
+      button.dataset.vataDragged = "1";
+    }
+  }
+
+  button.addEventListener(
+    "pointerdown",
+    startDrag
+  );
+
+  button.addEventListener(
+    "pointermove",
+    moveDrag
+  );
+
+  button.addEventListener(
+    "pointerup",
+    endDrag
+  );
+
+  button.addEventListener(
+    "pointercancel",
+    endDrag
+  );
+
+  /*
+   * Capture-phase click suppression after dragging.
+   * Normal click/tap remains unchanged.
+   */
+  button.addEventListener(
+    "click",
+    function(e){
+      if(button.dataset.vataDragged === "1"){
+        button.dataset.vataDragged = "0";
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
+    },
+    true
+  );
+
+  window.addEventListener(
+    "resize",
+    function(){
+      const rect = button.getBoundingClientRect();
+
+      if(
+        rect.width <= 0 ||
+        rect.height <= 0
+      ){
+        return;
+      }
+
+      const maxX = Math.max(
+        8,
+        window.innerWidth - rect.width - 8
+      );
+
+      const maxY = Math.max(
+        8,
+        window.innerHeight - rect.height - 8
+      );
+
+      const x = clamp(rect.left,8,maxX);
+      const y = clamp(rect.top,8,maxY);
+
+      button.style.left = x + "px";
+      button.style.top = y + "px";
+      button.style.right = "auto";
+      button.style.bottom = "auto";
+
+      savePosition(x,y);
+    }
+  );
+
+  /*
+   * Restore after initial layout.
+   */
+  window.addEventListener(
+    "load",
+    function(){
+      setTimeout(
+        restorePosition,
+        50
+      );
+    }
+  );
+
+})();
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
