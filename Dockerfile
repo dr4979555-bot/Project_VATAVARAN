@@ -107,10 +107,10 @@ RUN useradd --system --no-create-home --uid 8000 vatavaran \
 
 USER vatavaran
 
-EXPOSE 8000
+EXPOSE 10000
 
 # Dockerfile-level healthcheck (docker-compose.yml mirrors this definition).
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
-    CMD curl -fsS http://localhost:8000/api/v1/system/status || exit 1
+    CMD curl -fsS http://localhost:10000/api/v1/system/status || exit 1
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
