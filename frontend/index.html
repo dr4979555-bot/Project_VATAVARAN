@@ -1624,7 +1624,7 @@
      window.location.hostname === '127.0.0.1' ||
      window.location.protocol === 'file:')
       ? 'http://127.0.0.1:8000'
-      : window.location.origin;
+      : 'https://project-vatawaran.onrender.com';
 
   const COLORS = {
     TROPICAL_CYCLONE:      '#8b1a1a',
@@ -3251,7 +3251,7 @@ const CHAT_API =
    window.location.hostname === '127.0.0.1' ||
    window.location.protocol === 'file:')
     ? 'http://127.0.0.1:8000'
-    : window.location.origin;
+    : 'https://project-vatawaran.onrender.com';
 async function loadData(){
     try{
       const r = await fetch(`${CHAT_API}/api/v1/forecast/track?lead_time_min=48&lead_time_max=240&min_efi=0.80`);
