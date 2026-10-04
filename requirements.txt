@@ -2,6 +2,7 @@
 fastapi>=0.110.0
 uvicorn[standard]>=0.30.0
 pydantic>=2.7.0
+groq>=1.7.0
 python-multipart>=0.0.9
 # ── Data Ingestion & Array Computing ──
 numpy>=1.26.0
