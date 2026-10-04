@@ -426,7 +426,7 @@ async def system_status():
             PipelineStage(stage=1, name="Data Ingestion & Normalization", status="completed", latency_ms=2340),
             PipelineStage(stage=2, name="Spherical GNN Anomaly Tracker", status="completed", latency_ms=7820),
             PipelineStage(stage=3, name="Dynamic Spatial Cropping", status="completed", latency_ms=410),
-            PipelineStage(stage=4, name="Physics-Guided Diffusion Downscaling", status="idle", latency_ms=None),
+            PipelineStage(stage=4, name="Physics-Guided Diffusion Downscaling", status="completed", latency_ms=None),
             PipelineStage(stage=5, name="Validation & Alert Delivery", status="idle", latency_ms=None),
         ],
         gov_sources_active=5,
@@ -1387,6 +1387,408 @@ def _build_v8_local_field(
     }
 
 
+
+def _try_v16_downscale(
+    req: DownscaleRequest,
+):
+    """
+    Run V16 conditional diffusion using the local V8 forecast field.
+
+    V8 remains the safe fallback if V16 cannot execute.
+    """
+
+    base = _build_v8_local_field(
+        anomaly_id=req.anomaly_id,
+        lead_time_hours=req.lead_time_hours,
+    )
+
+    try:
+        try:
+            from app.ml.v16_diffusion_downscaler import (
+                generate_from_coarse_patch,
+            )
+        except ImportError:
+            from backend.app.ml.v16_diffusion_downscaler import (
+                generate_from_coarse_patch,
+            )
+
+        features = base.get(
+            "features",
+            [],
+        )
+
+        if len(features) < 2:
+            raise ValueError(
+                "V8 local field did not contain enough grid points."
+            )
+
+        meta = features[0]
+        meta_props = dict(
+            meta.get(
+                "properties",
+                {},
+            )
+        )
+
+        center = meta.get(
+            "geometry",
+            {},
+        ).get(
+            "coordinates",
+            [],
+        )
+
+        if len(center) < 2:
+            raise ValueError(
+                "V8 anomaly metadata has no valid center coordinates."
+            )
+
+        center_lon = float(center[0])
+        center_lat = float(center[1])
+
+        point_map = {}
+
+        for feature in features[1:]:
+
+            props = feature.get(
+                "properties",
+                {},
+            )
+
+            node_index = props.get(
+                "node_index"
+            )
+
+            if node_index is None:
+                continue
+
+            try:
+                node = int(
+                    node_index
+                )
+                coords = feature.get(
+                    "geometry",
+                    {},
+                ).get(
+                    "coordinates",
+                    [],
+                )
+
+                if len(coords) < 2:
+                    continue
+
+                point_map[node] = {
+                    "row": node // 30,
+                    "col": node % 30,
+                    "lat": float(coords[1]),
+                    "lon": float(coords[0]),
+                    "values": np.asarray(
+                        [
+                            float(
+                                props.get(
+                                    "temperature_c",
+                                    0.0,
+                                )
+                            ),
+                            float(
+                                props.get(
+                                    "humidity_pct",
+                                    0.0,
+                                )
+                            ),
+                            float(
+                                props.get(
+                                    "wind_speed_kmh",
+                                    0.0,
+                                )
+                            ),
+                            float(
+                                props.get(
+                                    "precipitation_mm",
+                                    0.0,
+                                )
+                            ),
+                        ],
+                        dtype=np.float32,
+                    ),
+                }
+
+            except (
+                TypeError,
+                ValueError,
+            ):
+                continue
+
+        if len(point_map) < 4:
+            raise ValueError(
+                "V8 local field has too few usable nodes "
+                "for Stage-2 conditioning."
+            )
+
+        candidates = list(
+            point_map.items()
+        )
+
+        center_node, center_info = min(
+            candidates,
+            key=lambda item: (
+                (item[1]["lat"] - center_lat) ** 2
+                + (item[1]["lon"] - center_lon) ** 2
+            ),
+        )
+
+        center_row = center_info["row"]
+        center_col = center_info["col"]
+
+        coarse = np.zeros(
+            (4, 5, 5),
+            dtype=np.float32,
+        )
+
+        for rr, dr in enumerate(
+            range(-2, 3)
+        ):
+            for cc, dc in enumerate(
+                range(-2, 3)
+            ):
+
+                wanted_row = center_row + dr
+                wanted_col = center_col + dc
+
+                wanted_node = (
+                    wanted_row * 30
+                    + wanted_col
+                )
+
+                selected = point_map.get(
+                    wanted_node
+                )
+
+                if selected is None:
+
+                    selected = min(
+                        point_map.values(),
+                        key=lambda item: (
+                            abs(
+                                item["row"]
+                                - wanted_row
+                            )
+                            + abs(
+                                item["col"]
+                                - wanted_col
+                            )
+                        ),
+                    )
+
+                coarse[
+                    :,
+                    rr,
+                    cc,
+                ] = selected["values"]
+
+        hazard = str(
+            meta_props.get(
+                "hazard_type",
+                base.get(
+                    "hazard_type",
+                    "EXTREME_PRECIPITATION",
+                ),
+            )
+        ).upper()
+
+        stage2 = generate_from_coarse_patch(
+            coarse_field=coarse,
+            center_lat=center_lat,
+            center_lon=center_lon,
+            hazard=hazard,
+            ensemble_size=req.num_ensemble_samples,
+            device_name="cpu",
+        )
+
+        stage2_features = stage2.get(
+            "features",
+            [],
+        )
+
+        # Preserve the existing frontend's first metadata feature.
+        stage2_meta = {
+            "type": meta.get(
+                "type",
+                "Feature",
+            ),
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    center_lon,
+                    center_lat,
+                ],
+            },
+            "properties": meta_props,
+        }
+
+        stage2_meta["properties"].update(
+            {
+                "source": (
+                    "VATAVARAN V16 conditional "
+                    "diffusion prototype"
+                ),
+                "coarse_source": (
+                    "VATAVARAN V8 30x30 ~1-degree "
+                    "forecast field"
+                ),
+                "resolution_km": 5.0,
+                "downscaling_engine": (
+                    "Conditional diffusion with "
+                    "physics-guided loss"
+                ),
+                "ensemble_samples": int(
+                    stage2.get(
+                        "ensemble_samples",
+                        req.num_ensemble_samples,
+                    )
+                ),
+                "probabilistic_outputs": (
+                    "P10/P50/P90/P99"
+                ),
+                "true_12km_to_5km": False,
+                "training_mode": (
+                    "synthetic physics-guided "
+                    "pretraining"
+                ),
+            }
+        )
+
+        for feature in stage2_features:
+
+            props = feature.setdefault(
+                "properties",
+                {},
+            )
+
+            props["hazard_type"] = hazard
+            props["resolution_km"] = 5.0
+
+            if hazard == "EXTREME_HEAT":
+
+                props["field_value"] = float(
+                    props.get(
+                        "temperature_p50_c",
+                        0.0,
+                    )
+                )
+
+                props["field_name"] = (
+                    "temperature_p50_c"
+                )
+
+                props["field_unit"] = "°C"
+
+            elif hazard == "HIGH_WIND":
+
+                props["field_value"] = float(
+                    props.get(
+                        "wind_p50_kmh",
+                        0.0,
+                    )
+                )
+
+                props["field_name"] = (
+                    "wind_p50_kmh"
+                )
+
+                props["field_unit"] = "km/h"
+
+            else:
+
+                props["field_value"] = float(
+                    props.get(
+                        "precip_p50_mm",
+                        0.0,
+                    )
+                )
+
+                props["field_name"] = (
+                    "precip_p50_mm"
+                )
+
+                props["field_unit"] = "mm"
+
+            coords = feature.get(
+                "geometry",
+                {},
+            ).get(
+                "coordinates",
+                [],
+            )
+
+            if len(coords) >= 2:
+                props["longitude"] = float(
+                    coords[0]
+                )
+                props["latitude"] = float(
+                    coords[1]
+                )
+
+        base.update(
+            {
+                "mode": (
+                    "v16_physics_guided_"
+                    "conditional_diffusion"
+                ),
+                "engine": (
+                    "VATAVARAN V16 conditional "
+                    "diffusion"
+                ),
+                "message": (
+                    "V16 conditional diffusion "
+                    "prototype generated a 5 km "
+                    "probabilistic local field "
+                    "from the V8 forecast crop."
+                ),
+                "resolution_km": 5.0,
+                "ensemble_samples": int(
+                    stage2.get(
+                        "ensemble_samples",
+                        req.num_ensemble_samples,
+                    )
+                ),
+                "probabilistic_outputs": [
+                    "P10",
+                    "P50",
+                    "P90",
+                    "P99",
+                ],
+                "physics_constraint": True,
+                "physics_training_loss": True,
+                "true_12km_to_5km": False,
+                "training_mode": (
+                    "synthetic physics-guided "
+                    "pretraining"
+                ),
+                "features": [
+                    stage2_meta
+                ]
+                + stage2_features,
+            }
+        )
+
+        return base
+
+    except Exception as exc:
+
+        print(
+            "V16 downscaling fallback -> V8:",
+            repr(exc),
+        )
+
+        base["v16_fallback"] = True
+        base["v16_fallback_reason"] = str(
+            exc
+        )[:300]
+
+        return base
+
+
 @app.post("/api/v1/downscale/generate")
 async def generate_downscale(req: DownscaleRequest):
     """
@@ -1398,10 +1800,7 @@ async def generate_downscale(req: DownscaleRequest):
     """
 
     try:
-        return _build_v8_local_field(
-            anomaly_id=req.anomaly_id,
-            lead_time_hours=req.lead_time_hours,
-        )
+        return _try_v16_downscale(req)
 
     except FileNotFoundError as exc:
         return {
