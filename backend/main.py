@@ -1941,16 +1941,31 @@ async def serve_frontend():
 if os.path.isdir(FRONTEND_DIR):
     app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
 
-# ─── AI/ML Extreme Event Predictor ────────────────────────────────────────────
+# ─── Optional historical/spatial AI/ML modules ─────────────────────────────────
+# These modules depend on large historical artifacts that are not bundled
+# in the production deployment. Keep them optional so the core API can start.
 try:
-    from backend.app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
+    from backend.app.ml.extreme_event_predictor import (
+        predict_extreme_event,
+        predict_extreme_events,
+    )
 except ImportError:
-    from app.ml.extreme_event_predictor import predict_extreme_event, predict_extreme_events
+    try:
+        from app.ml.extreme_event_predictor import (
+            predict_extreme_event,
+            predict_extreme_events,
+        )
+    except ImportError:
+        predict_extreme_event = None
+        predict_extreme_events = None
 
 try:
     from backend.app.ml.spatial_event_tracker import build_spatial_track
 except ImportError:
-    from app.ml.spatial_event_tracker import build_spatial_track
+    try:
+        from app.ml.spatial_event_tracker import build_spatial_track
+    except ImportError:
+        build_spatial_track = None
 
 try:
     from backend.app.ml.spatial_intensity import (
@@ -1959,11 +1974,16 @@ try:
         build_track_segments,
     )
 except ImportError:
-    from app.ml.spatial_intensity import (
-        build_snapshot_intensity_grid,
-        build_track_intensity_sequence,
-        build_track_segments,
-    )
+    try:
+        from app.ml.spatial_intensity import (
+            build_snapshot_intensity_grid,
+            build_track_intensity_sequence,
+            build_track_segments,
+        )
+    except ImportError:
+        build_snapshot_intensity_grid = None
+        build_track_intensity_sequence = None
+        build_track_segments = None
 
 
 class ExtremeEventPredictionRequest(BaseModel):

@@ -2,7 +2,7 @@ from pathlib import Path
 import math
 import pandas as pd
 
-from app.ml.nationwide_spatial_grid import (
+from .nationwide_spatial_grid import (
     build_spatial_grid,
     build_grid_index,
     build_neighbor_map,

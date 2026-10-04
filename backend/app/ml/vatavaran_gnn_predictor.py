@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from app.ml.train_vatavaran_gnn import (
+from .train_vatavaran_gnn import (
     VatavaranGNN,
     WEATHER_FEATURES,
     CITY_NAMES,
@@ -13,7 +13,7 @@ from app.ml.train_vatavaran_gnn import (
     node_id_to_index,
 )
 
-from app.ml.nationwide_spatial_grid import build_graph_structure
+from .nationwide_spatial_grid import build_graph_structure
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]

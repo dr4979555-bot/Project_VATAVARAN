@@ -8,8 +8,8 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from app.ml.nationwide_spatial_grid import build_graph_structure
-from app.ml.weather_graph_builder import CITY_COORDINATES
+from .nationwide_spatial_grid import build_graph_structure
+from .weather_graph_builder import CITY_COORDINATES
 
 
 # ============================================================
