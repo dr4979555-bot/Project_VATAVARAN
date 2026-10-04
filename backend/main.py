@@ -2738,41 +2738,54 @@ async def vatavaran_freeform_chat(payload: dict):
             "so no city-proximity calculation was performed."
         )
 
-    # City + precipitation intent: rank all nearby trajectory points.
+    # City + precipitation intent: return precipitation-only nearby signals
+    # and derive local movement from the same anomaly's available trajectory points.
     if requested_city:
         query_lower = query.lower()
 
-        precipitation_phrases = (
-            "highest precipitation",
-            "highest rain",
-            "most precipitation",
-            "most rain",
-            "maximum precipitation",
-            "maximum rain",
-            "max precipitation",
-            "max rain",
-            "sabse zyada baarish",
-            "sabse zyada precipitation",
-            "sabse heavy rain",
-            "sabse tez baarish",
+        precipitation_terms = (
+            "extreme precipitation",
+            "precipitation",
+            "rainfall",
+            "rain",
+            "heavy rain",
+            "heavy rainfall",
+            "baarish",
+            "barish",
+            "\u092c\u093e\u0930\u093f\u0936",
         )
 
-        if any(p in query_lower for p in precipitation_phrases):
-            ranked = []
+        is_precipitation_intent = any(
+            term in query_lower for term in precipitation_terms
+        )
+
+        if is_precipitation_intent:
+            precipitation_matches = []
 
             for match in all_location_matches:
+                hazard = str(match.get("hazard_type") or "").upper()
+
+                if (
+                    "PRECIP" not in hazard
+                    and "RAIN" not in hazard
+                ):
+                    continue
+
                 try:
                     value = float(match.get("precipitation"))
                 except (TypeError, ValueError):
                     continue
 
-                if value == value:
-                    ranked.append((value, match))
+                if math.isfinite(value):
+                    precipitation_matches.append((value, match))
 
-            ranked.sort(key=lambda item: item[0], reverse=True)
+            precipitation_matches.sort(
+                key=lambda item: item[0],
+                reverse=True,
+            )
 
-            if ranked:
-                precip_value, match = ranked[0]
+            if precipitation_matches:
+                precip_value, match = precipitation_matches[0]
                 city_title = requested_city.title()
 
                 severity_value = match.get("severity")
@@ -2794,19 +2807,191 @@ async def vatavaran_freeform_chat(payload: dict):
                         else f"{physics_number:.0f}%"
                     )
 
+                # Derive movement from the full trajectory of the
+                # selected V8 anomaly, not only the subset within 100 km
+                # of the requested city.
+                target_anomaly = next(
+                    (
+                        anomaly
+                        for anomaly in raw_anomalies
+                        if anomaly.get("anomaly_id") == match.get("anomaly_id")
+                    ),
+                    None,
+                )
+
+                full_track = []
+
+                if isinstance(target_anomaly, dict):
+                    trajectories = target_anomaly.get("trajectories", [])
+
+                    if isinstance(trajectories, list):
+                        for point in trajectories:
+                            if not isinstance(point, dict):
+                                continue
+
+                            centroid = point.get("centroid")
+
+                            if (
+                                not isinstance(centroid, list)
+                                or len(centroid) < 2
+                            ):
+                                continue
+
+                            try:
+                                point_lon = float(centroid[0])
+                                point_lat = float(centroid[1])
+                                point_lead = float(
+                                    point.get("lead_time_hours")
+                                )
+                            except (TypeError, ValueError):
+                                continue
+
+                            if not all(
+                                math.isfinite(value)
+                                for value in (
+                                    point_lat,
+                                    point_lon,
+                                    point_lead,
+                                )
+                            ):
+                                continue
+
+                            full_track.append(
+                                {
+                                    "latitude": point_lat,
+                                    "longitude": point_lon,
+                                    "lead_time_hours": point_lead,
+                                }
+                            )
+
+                full_track.sort(
+                    key=lambda item: item["lead_time_hours"]
+                )
+
+                movement_text = (
+                    "Centroid movement: **not inferable from the "
+                    "available V8 trajectory**"
+                )
+
+                track_horizon_text = "Track horizon: **N/A**"
+                track_points_text = "Track points: **N/A**"
+
+                if full_track:
+                    first_point = full_track[0]
+                    last_point = full_track[-1]
+
+                    first_lead = first_point["lead_time_hours"]
+                    last_lead = last_point["lead_time_hours"]
+
+                    track_horizon_text = (
+                        f"Track horizon: **T+{first_lead:.0f}h → "
+                        f"T+{last_lead:.0f}h**"
+                    )
+
+                    track_points_text = (
+                        f"Track points: **{len(full_track)}**"
+                    )
+
+                    if len(full_track) >= 2 and last_lead > first_lead:
+                        path_distance_km = 0.0
+
+                        for previous_point, current_point in zip(
+                            full_track,
+                            full_track[1:],
+                        ):
+                            path_distance_km += _distance_km(
+                                previous_point["latitude"],
+                                previous_point["longitude"],
+                                current_point["latitude"],
+                                current_point["longitude"],
+                            )
+
+                        elapsed_hours = last_lead - first_lead
+                        average_speed_kmh = (
+                            path_distance_km / elapsed_hours
+                        )
+
+                        direct_distance_km = _distance_km(
+                            first_point["latitude"],
+                            first_point["longitude"],
+                            last_point["latitude"],
+                            last_point["longitude"],
+                        )
+
+                        bearing = math.degrees(
+                            math.atan2(
+                                math.sin(
+                                    math.radians(
+                                        last_point["longitude"]
+                                        - first_point["longitude"]
+                                    )
+                                )
+                                * math.cos(
+                                    math.radians(last_point["latitude"])
+                                ),
+                                math.cos(
+                                    math.radians(first_point["latitude"])
+                                )
+                                * math.sin(
+                                    math.radians(last_point["latitude"])
+                                )
+                                - math.sin(
+                                    math.radians(first_point["latitude"])
+                                )
+                                * math.cos(
+                                    math.radians(last_point["latitude"])
+                                )
+                                * math.cos(
+                                    math.radians(
+                                        last_point["longitude"]
+                                        - first_point["longitude"]
+                                    )
+                                ),
+                            )
+                        )
+
+                        bearing = (bearing + 360.0) % 360.0
+
+                        directions = (
+                            "N",
+                            "NE",
+                            "E",
+                            "SE",
+                            "S",
+                            "SW",
+                            "W",
+                            "NW",
+                        )
+
+                        direction = directions[
+                            int((bearing + 22.5) // 45) % 8
+                        ]
+
+                        movement_text = (
+                            f"Centroid movement: **{path_distance_km:.1f} km** "
+                            f"across the V8 trajectory "
+                            f"(direct displacement **{direct_distance_km:.1f} km**, "
+                            f"average **{average_speed_kmh:.1f} km/h**, "
+                            f"direction **{direction}**)"
+                        )
+
                 reply = (
-                    f"**Highest precipitation signal near {city_title}:**\n\n"
-                    f"**{match.get('hazard_type') or 'Weather anomaly'}**\n"
-                    f"Precipitation: **{precip_value:.3f}**\n"
-                    f"Distance: **{match['distance_km']:.1f} km** from {city_title}\n"
+                    f"**Extreme precipitation forecast near {city_title}:**\n\n"
+                    f"**{match.get('hazard_type') or 'EXTREME_PRECIPITATION'}**\n"
+                    f"Precipitation signal: **{precip_value:.3f}**\n"
+                    f"Distance: **{match['distance_km']:.1f} km** from "
+                    f"{city_title}\n"
                     f"Forecast point: **T+{match.get('lead_time_hours')}h**\n"
                     f"Grid point: **{match['latitude']:.2f}°N, "
                     f"{match['longitude']:.2f}°E**\n"
-                    f"Severity: **{severity_text}** · "
+                    f"Severity: **{severity_text}** | "
                     f"Physics: **{physics_text}**\n"
+                    f"{track_horizon_text}\n"
+                    f"{track_points_text}\n"
+                    f"{movement_text}\n"
                     f"Track: **{match.get('anomaly_id')}**\n\n"
-                    "This is the highest precipitation value among nearby "
-                    "V8 tracked trajectory points within 100 km."
+                    "Movement describes the forecast anomaly centroid "
+                    "trajectory; it is not an extrapolated storm track."
                 )
 
                 return {
@@ -2858,7 +3043,7 @@ async def vatavaran_freeform_chat(payload: dict):
                         f"Forecast point: **T+{match.get('lead_time_hours')}h**",
                         f"Grid point: **{match['latitude']:.2f}°N, "
                         f"{match['longitude']:.2f}°E**",
-                        f"Severity: **{severity_text}** · "
+                        f"Severity: **{severity_text}** | "
                         f"Physics: **{physics_text}**",
                         f"Track: **{match.get('anomaly_id')}**",
                         "",
