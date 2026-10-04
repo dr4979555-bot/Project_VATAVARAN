@@ -1423,7 +1423,7 @@
 <header>
   <div class="hdr-dateline">
     <span class="dateline-left" id="cycle-badge">Vol. I &nbsp;·&nbsp; 00Z Forecast Cycle</span>
-    <span class="dateline-center">⬡ VATAWARAN V8 · V8 GNN Forecast Grid · 1° Spatial Grid Resolution ⬡</span>
+    <span class="dateline-center">⬡ VATAWARAN V8 → V16 · GNN Tracking + Probabilistic Downscaling · 5 km Prototype ⬡</span>
     <span class="dateline-right">Smart India Hackathon 2026 &nbsp;·&nbsp; PS #26078</span>
   </div>
   <div class="hdr-masthead">
@@ -1460,7 +1460,7 @@
       </div>
       <span class="cycle-text" id="gpu-badge">GPU: —</span>
       <div class="hdr-tags">
-        <span class="hdr-tag gpu">VATAWARAN V8 · Stage 1–2 · SIH '26 · #26078</span>
+        <span class="hdr-tag gpu">VATAWARAN V8 → V16 · Stage 1–2 · SIH '26 · #26078</span>
       </div>
     </div>
   </div>
@@ -1475,7 +1475,7 @@
   </div>
   <div class="gov-pill interactive" onclick="vat.showGovSourcesModal()" title="View all upstream and downstream Government API statuses">
     <span class="gov-pill-dot"></span>
-    <span>VATAWARAN V8 GNN Forecast Grid</span>
+    <span>V8 GNN Coarse Forecast + V16 Conditional Diffusion</span>
     <span class="pill-tag">SYNCED</span>
   </div>
   <div class="gov-pill interactive" onclick="vat.showGovSourcesModal()" title="40-year Reference Baseline (1979-2020)">
@@ -1527,11 +1527,11 @@
       <div class="diff-ticker">
         <div class="diff-ticker-top">
           <span class="diff-ticker-icon">⚙</span>
-          <span class="diff-ticker-hed">Stage II · V8 Forecast Grid</span>
+          <span class="diff-ticker-hed">Stage II · V16 Probabilistic Downscaling</span>
         </div>
         <div class="diff-counter-wrap">
           <div class="diff-counter" id="diff-step">00</div>
-          <div class="diff-counter-den">V8 Forecast Processing Stages</div>
+          <div class="diff-counter-den">V16 Diffusion Processing Stages</div>
         </div>
         <div class="diff-bar-segs" id="diff-segs">
           <!-- 20 segments, JS fills them -->
@@ -1751,7 +1751,7 @@
       const cyc = d.forecast_cycle.replace('T', ' ').replace('Z', '') + ' UTC';
       document.getElementById('cycle-badge').textContent = 'Vol. I · Cycle: ' + cyc;
       document.getElementById('gpu-badge').textContent =
-        'Inference: Local V8 Runtime';
+        'Inference: Local V8 + V16 Runtime';
       d.pipeline_stages.forEach(s => {
         const el = document.getElementById('pipe-' + s.stage);
         if (el) el.className = 'pipe-step ' + s.status;
@@ -2106,11 +2106,11 @@
         <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--ink-mid); display:flex; flex-direction:column; gap:5px; margin-top:6px; background:var(--paper-2); padding:8px; border:1px solid var(--rule-light);">
           <div style="display:flex; justify-content:space-between;">
             <span>Forecast Model:</span>
-            <strong style="color:var(--navy-2);">VATAWARAN V8 GNN Forecast Grid</strong>
+            <strong style="color:var(--navy-2);">V8 GNN Coarse Forecast + V16 Conditional Diffusion</strong>
           </div>
           <div style="display:flex; justify-content:space-between;">
             <span>Forecast Basis:</span>
-            <span>V8 learned spatio-temporal forecast representation</span>
+            <span>V8 coarse spatio-temporal forecast representation + V16 probabilistic downscaling</span>
           </div>
           <div style="display:flex; justify-content:space-between;">
             <span>Alert Integration:</span>
@@ -2154,13 +2154,29 @@
   const cellCount =
     grid.length;
 
-  /*
-   * This output is a V8 local forecast-field crop.
-   * It is NOT a 5 km diffusion/downscaling product.
-   */
+  const isV16 =
+    result?.mode ===
+      'v16_physics_guided_conditional_diffusion' ||
+    String(result?.engine || '').includes('V16');
+
+  const resolutionKm =
+    Number(result?.resolution_km) ||
+    1;
+
+  const ensembleSamples =
+    Number(result?.ensemble_samples) ||
+    1;
+
+  const probabilisticOutputs =
+    Array.isArray(result?.probabilistic_outputs)
+      ? result.probabilistic_outputs.join(' / ')
+      : 'P10 / P50 / P90 / P99';
 
   const severity =
-    props.severity_level || '—';
+    props.severity_level ??
+    props.severity ??
+    result?.severity ??
+    '—';
 
   const hazard =
     props.hazard_type ||
@@ -2169,17 +2185,46 @@
 
   const temperatures =
     grid
-      .map(f => Number(f?.properties?.temperature_c))
+      .map(f =>
+        Number(
+          f?.properties?.temperature_p50_c ??
+          f?.properties?.temperature_c
+        )
+      )
       .filter(Number.isFinite);
 
   const winds =
     grid
-      .map(f => Number(f?.properties?.wind_speed_kmh))
+      .map(f =>
+        Number(
+          f?.properties?.wind_p50_kmh ??
+          f?.properties?.wind_speed_kmh
+        )
+      )
       .filter(Number.isFinite);
 
   const precipitation =
     grid
-      .map(f => Number(f?.properties?.precip_p90_mm))
+      .map(f =>
+        Number(
+          f?.properties?.precip_p90_mm ??
+          f?.properties?.precipitation_mm
+        )
+      )
+      .filter(Number.isFinite);
+
+  const precipitationP50 =
+    grid
+      .map(f =>
+        Number(f?.properties?.precip_p50_mm)
+      )
+      .filter(Number.isFinite);
+
+  const precipitationP99 =
+    grid
+      .map(f =>
+        Number(f?.properties?.precip_p99_mm)
+      )
       .filter(Number.isFinite);
 
   const maxTemp =
@@ -2195,6 +2240,16 @@
   const maxPrecip =
     precipitation.length
       ? Math.max(...precipitation)
+      : null;
+
+  const maxPrecipP50 =
+    precipitationP50.length
+      ? Math.max(...precipitationP50)
+      : null;
+
+  const maxPrecipP99 =
+    precipitationP99.length
+      ? Math.max(...precipitationP99)
       : null;
 
   const physics =
@@ -2218,7 +2273,11 @@
     <div class="d-hed">
       <div class="d-hed-line"></div>
       <span class="d-hed-label">
-        Local Forecast Output · V8 Grid Crop
+        ${
+          isV16
+            ? 'Probabilistic Downscaling Output · V16'
+            : 'Local Forecast Output · V8 Grid Crop'
+        }
       </span>
       <div class="d-hed-line"></div>
     </div>
@@ -2230,8 +2289,16 @@
 
       <span class="qa-stamp ${fieldReady ? 'pass' : 'fail'}">
         ${fieldReady
-          ? '✓ V8 Field Ready'
-          : '✗ V8 Field Unavailable'}
+          ? (
+              isV16
+                ? '✓ 5 km Probabilistic Field Ready'
+                : '✓ V8 Field Ready'
+            )
+          : (
+              isV16
+                ? '✗ 5 km Field Unavailable'
+                : '✗ V8 Field Unavailable'
+            )}
       </span>
     </div>
 
@@ -2239,7 +2306,7 @@
 
       <div class="ds-box">
         <p class="ds-box-label">
-          Maximum Temperature
+          Maximum P50 Temperature
         </p>
 
         <p class="ds-box-value">
@@ -2255,7 +2322,7 @@
 
       <div class="ds-box">
         <p class="ds-box-label">
-          Maximum Wind
+          Maximum P50 Wind
         </p>
 
         <p class="ds-box-value">
@@ -2271,7 +2338,7 @@
 
       <div class="ds-box">
         <p class="ds-box-label">
-          Maximum Precipitation
+          Maximum P90 Precipitation
         </p>
 
         <p class="ds-box-value">
@@ -2287,7 +2354,7 @@
 
       <div class="ds-box">
         <p class="ds-box-label">
-          Grid Cells
+          Fine Grid Cells
         </p>
 
         <p class="ds-box-value">
@@ -2305,24 +2372,74 @@
 
       <div class="residual-cell">
         <span>Field</span>
-        V8 Forecast
+        ${
+          isV16
+            ? 'V16 Diffusion'
+            : 'V8 Forecast'
+        }
       </div>
 
       <div class="residual-cell">
         <span>Grid</span>
-        1° Spatial
+        ${
+          isV16
+            ? `${resolutionKm} km`
+            : '1° Spatial'
+        }
+      </div>
+
+      <div class="residual-cell">
+        <span>Ensemble</span>
+        ${
+          isV16
+            ? `${ensembleSamples} samples`
+            : '—'
+        }
       </div>
 
       <div class="residual-cell">
         <span>Physics</span>
-        ${physicsPct !== null
-          ? physicsPct + '%'
-          : '—'}
+        ${
+          physicsPct !== null
+            ? physicsPct + '%'
+            : (isV16 ? '✓ constrained' : '—')
+        }
+      </div>
+
+    </div>
+
+    <div class="residuals-row">
+
+      <div class="residual-cell">
+        <span>Output</span>
+        ${probabilisticOutputs}
       </div>
 
       <div class="residual-cell">
-        <span>Cells</span>
-        ${cellCount}
+        <span>P50 Rain Max</span>
+        ${
+          maxPrecipP50 !== null
+            ? maxPrecipP50.toFixed(2) + ' mm'
+            : '—'
+        }
+      </div>
+
+      <div class="residual-cell">
+        <span>P90 Rain Max</span>
+        ${
+          maxPrecip !== null
+            ? maxPrecip.toFixed(2) + ' mm'
+            : '—'
+        }
+      </div>
+
+      <div class="residual-cell">
+        <span>P99 Rain Max</span>
+        ${
+          maxPrecipP99 !== null
+            ? maxPrecipP99.toFixed(2) + ' mm'
+            : '—'
+        }
       </div>
 
     </div>
@@ -2335,7 +2452,7 @@
       <p class="advisory-body">
         ${
           props.advisory ||
-          'VATAWARAN V8 local forecast field extracted from the medium-range spatio-temporal forecast grid.'
+          'V8 coarse forecast field conditioned into the V16 probabilistic downscaling pipeline.'
         }
       </p>
     </div>
@@ -2393,7 +2510,7 @@
     selectAnomaly(id);
   }
 
-  /* ── Local V8 Forecast Field ──────────────────────────────── */
+  /* ── V16 Probabilistic Downscaling Field ──────────────────────────────── */
   async function downscale(id) {
     const screen = document.getElementById('diffusion-screen');
     const stepEl = document.getElementById('diff-step');
@@ -2408,11 +2525,12 @@
       'Loading V8 forecast artifact',
       'Locating anomaly snapshot',
       'Selecting requested lead time',
-      'Cropping local forecast field',
-      'Reading temperature / rainfall / wind',
-      'Checking physics-consistency metadata',
-      'Building GeoJSON field',
-      'Rendering local forecast field',
+      'Preparing V16 conditioning field',
+      'Running conditional diffusion',
+      'Applying physics-guided constraints',
+      'Generating P10 / P50 / P90 / P99 ensemble',
+      'Building 5 km GeoJSON field',
+      'Rendering 5 km probabilistic field',
     ];
 
     const TOTAL = steps.length;
@@ -2485,7 +2603,7 @@
               'wind',
               'precipitation'
             ],
-            num_ensemble_samples: 1,
+            num_ensemble_samples: 10,
           }),
         }
       );
@@ -2504,7 +2622,7 @@
       ) {
         throw new Error(
           result?.message ||
-          'V8 local field generation failed'
+          'V16 probabilistic downscaling failed'
         );
       }
 
@@ -2544,16 +2662,28 @@
     const isWind = hazard === 'HIGH_WIND';
 
     const fieldKey = isHeat
-      ? 'temperature_c'
+      ? (
+          isV16
+            ? 'temperature_p50_c'
+            : 'temperature_c'
+        )
       : isWind
-        ? 'wind_speed_kmh'
+        ? (
+            isV16
+              ? 'wind_p50_kmh'
+              : 'wind_speed_kmh'
+          )
         : 'precip_p90_mm';
 
     const fieldMax = isHeat
       ? 48
       : isWind
         ? 35
-        : 5;
+        : (
+            isV16
+              ? 20
+              : 5
+          );
 
     ['heatmap', 'circles'].forEach(t => { if (map.getLayer(`${t}-${id}`)) map.removeLayer(`${t}-${id}`); });
     if (map.getSource(`ds-${id}`)) map.removeSource(`ds-${id}`);
